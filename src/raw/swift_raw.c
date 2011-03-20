@@ -145,23 +145,24 @@ int sw_socket(int __domain, int __type, int __protocol)
 	int s;
 	struct sock_list *list;
 
-	s = socket(__domain, SOCK_RAW, IPPROTO_SWIFT);
-	if (s < 0)
+	if (__domain != PF_INET || __type != SOCK_RAW || __protocol != IPPROTO_SWIFT) {
+		errno = EINVAL;
 		goto sock_err;
+	}
+
+	s = socket(PF_INET, SOCK_RAW, IPPROTO_SWIFT);
+	if (s < 0) {
+		goto sock_err;
+	}
 
 	list = list_add_socket(s);
-	if (list == NULL)
+	if (list == NULL) {
+		errno = ENOMEM;
 		goto list_add_err;
+	}
 
 	/* Socket is fully open. */
 	list->rw_state = STATE_NO_SHUT;
-
-	if (__domain != AF_INET || __type != SOCK_RAW || __protocol != IPPROTO_SWIFT) {
-		errno = EINVAL;
-		return -1;
-	}
-	
-	s = socket(AF_INET, SOCK_RAW, IPPROTO_SWIFT);
 
 	return s;
 
@@ -186,6 +187,7 @@ int sw_bind(int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
 		errno = EADDRINUSE;
 		goto list_elem_err;
 	}
+
 	/* Update __fd entry in socket management list. */
 	list = list_update_socket_address(__fd, __addr);
 	if (list == NULL) {
@@ -221,8 +223,43 @@ ssize_t sw_sendto(int __fd, __const void *__buf, size_t __n,
 		       socklen_t __addr_len)
 {
 	ssize_t bytes_sent;
+	struct sock_list *list;
+	struct iovec __iov[1];
+	struct msghdr __msgh;
+	
+	list = list_elem_from_socket(__fd);
+	if (list == NULL) {
+		errno = EBADF;
+		goto sock_err;
+	}
 
-	return bytes_sent;
+	if (list->rw_state == STATE_SHUT_WR || list->rw_state == STATE_SHUT_RDWR) {
+		errno = ENOTCONN;
+		goto sock_err;	
+	}
+/*
+ 	if (list->state == STATE_NOBOUND) {
+		errno = EDESTADDRREQ;
+		goto sock_err;
+	}
+ */
+	
+	/* Specify the components of the message in an "iovec".   */
+	__iov[0].iov_base = __buf;
+	__iov[0].iov_len = __n;
+	
+	/* The message header contains parameters for sendmsg.    */
+	__msgh.msg_name = (caddr_t) __addr;
+	__msgh.msg_namelen = sizeof(__addr);
+	__msgh.msg_iov = __iov;
+	__msgh.msg_iovlen = 1;
+	__msgh.msg_control = NULL;            /* irrelevant to AF_INET */
+	__msgh.msg_controllen = 0;            /* irrelevant to AF_INET */
+
+	return sendmsg(__fd, &__msgh, 0);
+
+sock_err:
+	return -1;
 }
 
 /*
