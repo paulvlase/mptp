@@ -9,9 +9,9 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "swift_types.h"
-#include "swift_raw.h"
-#include "util.h"
+#include "include/swift_types.h"
+#include "include/swift_raw.h"
+#include "include/util.h"
 
 /*
  * Create a socket, bind it and send data.

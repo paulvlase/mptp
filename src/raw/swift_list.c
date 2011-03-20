@@ -22,8 +22,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "swift_types.h"
-#include "swift_list.h"
+#include "include/swift_types.h"
+#include "include/swift_list.h"
 
 /*
  * Add new socket to list. Called by sw_socket "syscall".
