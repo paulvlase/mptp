@@ -35,9 +35,13 @@ extern "C" {
  */
 
 #define SWIFT_HASH_SIZE		8
+struct sw_state {
+	unsigned int state:4;
+	unsigned int info:4;
+};
 
 struct sw_hash {
-	unsigned char h_array[SWIFT_HASH_SIZE];
+	u_int8_t h_array[SWIFT_HASH_SIZE];
 };
 
 struct sockaddr_sw {
@@ -58,8 +62,9 @@ struct sockaddr_sw {
 
 struct swhdr {
 	/* file hash (to be seeded or requested) */
-	u_int8_t base_hash[SWIFT_HASH_SIZE];
-	/* TODO */
+	struct sw_hash base_hash;
+	u_int8_t piece_hash;
+	struct sw_state sock_state;
 };
 
 #ifdef __cplusplus

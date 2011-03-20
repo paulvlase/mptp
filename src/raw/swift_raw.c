@@ -156,6 +156,13 @@ int sw_socket(int __domain, int __type, int __protocol)
 	/* Socket is fully open. */
 	list->rw_state = STATE_NO_SHUT;
 
+	if (__domain != AF_INET || __type != SOCK_RAW || __protocol != IPPROTO_SWIFT) {
+		errno = EINVAL;
+		return -1;
+	}
+	
+	s = socket(AF_INET, SOCK_RAW, IPPROTO_SWIFT);
+
 	return s;
 
 list_add_err:
@@ -215,8 +222,6 @@ ssize_t sw_sendto(int __fd, __const void *__buf, size_t __n,
 {
 	ssize_t bytes_sent;
 
-	/* TODO */
-
 	return bytes_sent;
 }
 
@@ -252,9 +257,7 @@ ssize_t sw_sendmsg(int __fd, __const struct msghdr *__message,
 {
 	ssize_t bytes_sent;
 
-	/* TODO */
-
-	return bytes_sent;
+	return sendmsg(__fd, __message, __flags);
 }
 
 /*
