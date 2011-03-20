@@ -54,6 +54,10 @@ extern "C" {
 		fflush(stdout);					\
 	} while (0)
 
+#define start_suite()			\
+	do {						\
+			printf("\n==== Starting %s ====\n", __FUNCTION__); \
+	} while (0)
 #ifdef __cplusplus
 }
 #endif

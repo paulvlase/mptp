@@ -5,7 +5,15 @@
 #include "test_sw.h"
 #include "test.h"
 
-void bind_dummy(void)
+static void bind_dummy(void);
+
+void bind_test_suite(void)
+{
+	start_suite();
+	bind_dummy();
+}
+
+static void bind_dummy(void)
 {
 	test(1 == 1);
 }

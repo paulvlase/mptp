@@ -9,17 +9,17 @@
 extern "C" {
 #endif
 
-void dummy_1_eq_1(void);
-void dummy_1_neq_0(void);
-void socket_dummy(void);
-void bind_dummy(void);
-void getsockname_dummy(void);
-void sendto_dummy(void);
-void recvfrom_dummy(void);
-void sendmsg_dummy(void);
-void recvmsg_dummy(void);
-void shutdown_dummy(void);
-void close_dummy(void);
+void test_dummy(void);
+void socket_test_suite(void);
+void bind_test_suite(void);
+void getsockname_test_suite(void);
+void getsockopt_test_suite(void);
+void sendto_test_suite(void);
+void recvfrom_test_suite(void);
+void sendmsg_test_suite(void);
+void recvmsg_test_suite(void);
+void shutdown_test_suite(void);
+void close_test_suite(void);
 
 /* TODO: fill with test function headers. */
 

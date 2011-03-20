@@ -5,7 +5,15 @@
 #include "test_sw.h"
 #include "test.h"
 
-void sendmsg_dummy(void)
+static void sendmsg_dummy(void);
+
+void sendmsg_test_suite(void)
+{
+	start_suite();
+	sendmsg_dummy();
+}
+
+static void sendmsg_dummy(void)
 {
 	test(1 == 1);
 }

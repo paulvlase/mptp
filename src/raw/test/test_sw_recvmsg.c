@@ -5,7 +5,15 @@
 #include "test_sw.h"
 #include "test.h"
 
-void recvmsg_dummy(void)
+static void recvmsg_dummy(void);
+
+void recvmsg_test_suite(void)
+{
+	start_suite();
+	recvmsg_dummy();
+}
+
+static void recvmsg_dummy(void) 
 {
 	test(1 == 1);
 }

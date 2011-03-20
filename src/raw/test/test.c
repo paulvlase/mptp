@@ -13,17 +13,17 @@
 
 static void (*test_fun_array[])(void) = {
 	NULL,
-	dummy_1_eq_1,
-	dummy_1_neq_0,
-	socket_dummy,
-	bind_dummy,
-	getsockname_dummy,
-	sendto_dummy,
-	recvfrom_dummy,
-	sendmsg_dummy,
-	recvmsg_dummy,
-	shutdown_dummy,
-	close_dummy,
+	test_dummy,
+	socket_test_suite,
+	bind_test_suite,
+	getsockname_test_suite,
+	getsockopt_test_suite,
+	sendto_test_suite,
+	recvfrom_test_suite,
+	sendmsg_test_suite,
+	recvmsg_test_suite,
+	shutdown_test_suite,
+	close_test_suite,
 };
 
 static void usage(const char *argv0)
