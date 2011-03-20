@@ -4,11 +4,13 @@ CFLAGS = -Wall -g
 
 all: swift_raw_simple_test
 
-swift_raw_simple_test: swift_raw_simple_test.o swift_raw.o
+swift_raw_simple_test: swift_raw_simple_test.o swift_raw.o swift_list.o
 
 swift_raw_simple_test.o: swift_raw_simple_test.c swift_raw.h util.h
 
 swift_raw.o: swift_raw.c swift_raw.h
+
+swift_list.o: swift_list.c swift_list.h
 
 clean:
 	-rm -f *~
