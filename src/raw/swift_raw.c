@@ -140,19 +140,21 @@ ssize_t sw_sendto(int __fd, __const void *__buf, size_t __n,
 	struct sock_list *list;
 	struct iovec __iov[1];
 	struct msghdr __msgh;
-	
+	struct sockaddr_sw *__sw_addr = (struct sockaddr_sw *) __addr;
+
+	printf("=== ADDR: %s ===", ntohl(__sw_addr->sin_addr.s_addr));
 	list = list_elem_from_socket(__fd);
 	if (list == NULL) {
 		errno = EBADF;
 		goto sock_err;
 	}
 
-/*
- 	if (list->state == STATE_NOBOUND) {
+
+ 	if (list->bind_state == STATE_NOTBOUND) {
 		errno = EDESTADDRREQ;
 		goto sock_err;
 	}
- */
+ 
 	
 	/* Specify the components of the message in an "iovec".   */
 	__iov[0].iov_base = (void *) __buf;
