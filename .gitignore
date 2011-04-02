@@ -2,3 +2,6 @@
 /lib
 /tags
 /TAGS
+*~
+*.o
+*.swp
