@@ -11,6 +11,10 @@
 #define DEBUG
 #include "lib_swift.h"
 
+/*
+ * TODO: send ssa as pointer
+ */
+
 void transformFromAddrToSwift(struct sockSwiftaddr *ssa, struct listsockaddr lsa)
 {
 	int i;
@@ -27,6 +31,10 @@ void transformFromAddrToSwift(struct sockSwiftaddr *ssa, struct listsockaddr lsa
 		ssa->sin_addr.s_addr[i] = lsa.sa[i].sin_addr.s_addr;
 	}
 }
+
+/*
+ * TODO: send ssa as pointer
+ */
 
 void transformFromSwiftToAddr(struct listsockaddr *lsa, struct sockSwiftaddr ssa)
 {
