@@ -1,13 +1,10 @@
 /*
- * swift interface for raw sockets
+ * swift data structures
  *
- * Simulates the classic socket syscalls (socket, bind, send, recv).
- * Implementation uses raw sockets (AF_INET, SOCK_RAW).
+ * swift struct sockaddr is dubbed struct sockaddr_sw.
+ * swhdr is swift packet header (as delivered on the network).
  *
- * Subsequently, implementation is to be ported into kernel space and
- * the interface is going to be offered by the Linux syscall API.
- *
- * 2010, Razvan Deaconescu, razvan.deaconescu@cs.pub.ro
+ * 2011, Razvan Deaconescu, razvan.deaconescu@cs.pub.ro
  */
 
 #ifndef SWIFT_TYPES_
