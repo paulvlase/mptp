@@ -10,8 +10,8 @@
  * 2010, Razvan Deaconescu, razvan.deaconescu@cs.pub.ro
  */
 
-#ifndef SWIFT_RAW_
-#define SWIFT_RAW_	1
+#ifndef SWIFT_TYPES_
+#define SWIFT_TYPES_	1
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -62,4 +62,4 @@ struct swhdr {
 }
 #endif
 
-#endif /* SWIFT_RAW_ */
+#endif /* SWIFT_TYPES_ */
