@@ -19,6 +19,13 @@ extern "C" {
 #endif
 
 /*
+ * 143 is a free IP protocol number (as shown in /etc/protocols
+ * and <netinet/in.h>).
+ */
+
+#define IPPROTO_SWIFT		143
+
+/*
  * swift address
  *   - IP address (Network Layer)
  *   - file hash (or hash for part of a file)
