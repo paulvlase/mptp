@@ -48,7 +48,7 @@ struct sockaddr_sw {
 	/* Pad to size of `struct sockaddr'.  */
 	unsigned char sw_zero[sizeof(struct sockaddr) -
 		__SOCKADDR_COMMON_SIZE -
-		sizeof(sw_hash) -
+		sizeof(struct sw_hash) -
 		sizeof(struct in_addr)];
 };
 
