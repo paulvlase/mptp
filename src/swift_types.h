@@ -48,6 +48,16 @@ struct sockaddr_sw {
 		sizeof(struct in_addr)];
 };
 
+/*
+ * swift header (work in progress)
+ */
+
+struct swhdr {
+	/* file hash (to be seeded or requested) */
+	u_int8_t base_hash[SWIFT_HASH_SIZE];
+	/* TODO */
+};
+
 #ifdef __cplusplus
 }
 #endif
