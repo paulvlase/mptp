@@ -20,20 +20,77 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include "swift_types.h"
 #include "swift_raw.h"
+
+/* socket management structure */
+struct sock_list {
+	int s;
+	struct sockaddr_sw addr;
+	struct sock_list *next;
+	struct sock_list *prev;
+};
+
+static struct sock_list sock_list_head = {
+	.next = &sock_list_head,
+	.prev = &sock_list_head
+};
+
+static struct sock_list *list_add_socket(int s)
+{
+	struct sock_list *ptr = malloc(sizeof(*ptr));
+	if (ptr == NULL)
+		return NULL;
+
+	ptr->next = &sock_list_head;
+	ptr->prev = sock_list_head.prev;
+	sock_list_head.prev->next = ptr;
+	sock_list_head.prev = ptr;
+
+	return ptr;
+}
+
+static struct sock_list *list_update_socket_address(int s, struct sockaddr_sw *addr)
+{
+	struct sock_list *ptr;
+
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (ptr->s == s) {
+			memcpy(&ptr->addr, addr, sizeof(ptr->addr));
+			return ptr;
+		}
+
+	return NULL;
+}
+
+static struct sock_list *list_unlink_socket(int s)
+{
+	struct sock_list *ptr;
+
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (ptr->s == s) {
+			ptr->next->prev = ptr->prev;
+			ptr->prev->next = ptr->next;
+			ptr->next = ptr;
+			ptr->prev = ptr;
+			return ptr;
+		}
+
+	return NULL;
+}
 
 /*
  * Create a new socket of type TYPE in domain DOMAIN, using
  * protocol PROTOCOL.  If PROTOCOL is zero, one is chosen automatically.
  * Returns a file descriptor for the new socket, or -1 for errors.
  *
- * swift: protocol is IPPROTO_SWIFT.
+ * swift: PROTOCOL is IPPROTO_SWIFT. Ignore TYPE.
  */
 int sw_socket (int __domain, int __type, int __protocol)
 {
 	int s;
 
-	/* TODO */
+	s = socket(__domain, SOCK_RAW, IPPROTO_SWIFT);
 
 	return s;
 }
