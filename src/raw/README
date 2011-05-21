@@ -1,0 +1,52 @@
+Raw socket-based implementation of swift transport protocol.
+
+Swift is a multiparty protocol implemented at Tranport Layer (layer 4)
+in the OSI stack. It is a form of BitTorrent in kernel space.
+
+This is a "simulated" implementation of the protocol using raw sockets.
+After testing and implementation focus is going to be to "port" the
+implementation in the Linux kernel as a true transport protocol.
+
+= GET SOURCE CODE =
+
+Use the git repository:
+      git clone gitolite@koala.cs.pub.ro:swifty.git
+
+= BUILDING =
+
+Just use the Makefile:
+      make
+
+= TEST CASES =
+
+Use the test/ folder to test the implementation. Use the Makefile to
+build the test executable and then run it:
+      cd test/
+      make
+      ./test
+
+= FILE STRUCTURE =
+
+* root folder
+  - swift_raw.c: implements the swift "syscalls". System calls are
+    simulated using raw sockets.
+  - swift_list.h/swift_list.c: list implementation for socket
+    management.
+  - swift_raw_simple_test.c: simple test going through all major swift
+    socket "syscalls".
+
+* include/ folder
+  - util.h: error handling utility functions and macros.
+  - debug.h: debugging functions and macros.
+  - swift_raw.h: raw socket-API (swift "syscalls").
+  - swift_types.h: swift address structure and header. These are
+    independent of the implementation; they should be unmodified when
+    doing the port to the Linux kernel.
+
+* test/ folder
+  - test.h: defines the test macro used throughout the tests.
+  - test.c: test source code file. Defines main() and invokes test
+    functions.
+  - test_sw.h: declaration of test functions invoked in test.c.
+  - test_*.c: definition of test functions; each file consists of a
+    different set of functions within the same scope.
