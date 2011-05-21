@@ -1,0 +1,6 @@
+* Implement tests in test_sw*.c files in test/.
+* Implement recv* functions in swift_raw.c.
+* Consider using an array instead of a list for socket management.
+* Use a generic (non-list/non-array specific interface) for socket management.
+** Do not use struct sock_list as structure name.
+** Do not use list_* as function names.
