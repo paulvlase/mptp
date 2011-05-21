@@ -36,6 +36,10 @@ static struct sock_list sock_list_head = {
 	.prev = &sock_list_head
 };
 
+/*
+ * Add new socket to list. Called by sw_socket "syscall".
+ */
+
 static struct sock_list *list_add_socket(int s)
 {
 	struct sock_list *ptr = malloc(sizeof(*ptr));
@@ -50,6 +54,10 @@ static struct sock_list *list_add_socket(int s)
 	return ptr;
 }
 
+/*
+ * Bind socket to given address. Called by sw_bind "syscall".
+ */
+
 static struct sock_list *list_update_socket_address(int s, struct sockaddr_sw *addr)
 {
 	struct sock_list *ptr;
@@ -62,6 +70,26 @@ static struct sock_list *list_update_socket_address(int s, struct sockaddr_sw *a
 
 	return NULL;
 }
+
+/*
+ * Get list element containing socket s. Called by sw_send* "syscalls".
+ */
+
+static struct sock_list *list_elem_from_socket(int s)
+{
+	struct sock_list *ptr;
+
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (ptr->s == s) {
+			return ptr;
+		}
+
+	return NULL;
+}
+
+/*
+ * Remove socket from list. Called by sw_close "syscall".
+ */
 
 static struct sock_list *list_unlink_socket(int s)
 {
