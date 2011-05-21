@@ -306,6 +306,49 @@ int sw_setsockopt (int __fd, int __level, int __optname,
  */
 int sw_shutdown (int __fd, int __how)
 {
+	struct sock_list *list;
+
+	/* Find socket in management structure. */
+	list = list_elem_from_socket(__fd);
+	if (list == NULL) {
+		errno = EBADF;
+		goto list_elem_err;
+	}
+
+	/* Check and update socket state. */
+	if (__how == STATE_SHUT_RDWR)
+		list->rw_state = STATE_SHUT_RDWR;
+	else if (__how == STATE_SHUT_WR) {
+		if (list->rw_state == STATE_SHUT_RD)
+			list->rw_state = STATE_SHUT_RDWR;
+		else if (list->rw_state == STATE_SHUT_WR) {
+			errno = ENOTCONN;
+			goto not_conn_err;
+		}
+	}
+	else if (__how == STATE_SHUT_RD) {
+		if (list->rw_state == STATE_SHUT_WR)
+			list->rw_state = STATE_SHUT_RDWR;
+		else if (list->rw_state == STATE_SHUT_RD) {
+			errno = ENOTCONN;
+			goto not_conn_err;
+		}
+	}
+
+	/* Remove socket from socket management structure. */
+	if (list->rw_state == STATE_SHUT_RDWR) {
+		list = list_unlink_socket(__fd);
+		if (list == NULL) {
+			errno = EBADF;
+			goto list_unlink_err;
+		}
+	}
+
 	/* Call classical interface of shutdown(2). */
 	return shutdown(__fd, __how);
+
+not_conn_err:
+list_elem_err:
+list_unlink_err:
+	return -1;
 }
