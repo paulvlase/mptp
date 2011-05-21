@@ -107,16 +107,6 @@ extern int sw_setsockopt (int __fd, int __level, int __optname,
 		       __const void *__optval, socklen_t __optlen) __THROW;
 
 /*
- * Shut down all or part of the connection open on socket FD.
- * HOW determines what to shut down:
- *   SHUT_RD   = No more receptions;
- *   SHUT_WR   = No more transmissions;
- *   SHUT_RDWR = No more receptions or transmissions.
- * Returns 0 on success, -1 for errors.
- */
-extern int sw_shutdown (int __fd, int __how) __THROW;
-
-/*
  * Close file descriptor for socket FD.
  * Returns 0 on success, -1 for errors.
  */

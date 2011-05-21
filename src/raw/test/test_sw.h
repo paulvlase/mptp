@@ -18,10 +18,7 @@ void sendto_test_suite(void);
 void recvfrom_test_suite(void);
 void sendmsg_test_suite(void);
 void recvmsg_test_suite(void);
-void shutdown_test_suite(void);
 void close_test_suite(void);
-
-/* TODO: fill with test function headers. */
 
 #ifdef __cplusplus
 }

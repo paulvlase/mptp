@@ -54,9 +54,6 @@ int sw_socket(int __domain, int __type, int __protocol)
 		goto list_add_err;
 	}
 
-	/* Socket is fully open. */
-	list->rw_state = STATE_NO_SHUT;
-
 	/* Socket is not bound. */
 	list->bind_state = STATE_NOTBOUND;
 
@@ -150,10 +147,6 @@ ssize_t sw_sendto(int __fd, __const void *__buf, size_t __n,
 		goto sock_err;
 	}
 
-	if (list->rw_state == STATE_SHUT_WR || list->rw_state == STATE_SHUT_RDWR) {
-		errno = ENOTCONN;
-		goto sock_err;	
-	}
 /*
  	if (list->state == STATE_NOBOUND) {
 		errno = EDESTADDRREQ;
@@ -248,70 +241,11 @@ int sw_getsockopt(int __fd, int __level, int __optname,
  * to *OPTVAL (which is OPTLEN bytes long).
  * Returns 0 on success, -1 for errors.
  */
-
 int sw_setsockopt(int __fd, int __level, int __optname,
 		       __const void *__optval, socklen_t __optlen)
 {
 	/* Call classical interface of setsockopt(2). */
 	return setsockopt(__fd, __level, __optname, __optval, __optlen);
-}
-
-/*
- * Shut down all or part of the connection open on socket FD.
- * HOW determines what to shut down:
- *   SHUT_RD   = No more receptions;
- *   SHUT_WR   = No more transmissions;
- *   SHUT_RDWR = No more receptions or transmissions.
- * Returns 0 on success, -1 for errors.
- */
-int sw_shutdown(int __fd, int __how)
-{
-	struct sock_list *list;
-	int rc;
-
-	/* Find socket in management structure. */
-	list = list_elem_from_socket(__fd);
-	if (list == NULL) {
-		errno = EBADF;
-		goto list_elem_err;
-	}
-
-	/* Check and update socket state. */
-	if (__how == STATE_SHUT_RDWR)
-		list->rw_state = STATE_SHUT_RDWR;
-	else if (__how == STATE_SHUT_WR) {
-		if (list->rw_state == STATE_SHUT_RD)
-			list->rw_state = STATE_SHUT_RDWR;
-		else if (list->rw_state == STATE_SHUT_WR) {
-			errno = ENOTCONN;
-			goto not_conn_err;
-		}
-	}
-	else if (__how == STATE_SHUT_RD) {
-		if (list->rw_state == STATE_SHUT_WR)
-			list->rw_state = STATE_SHUT_RDWR;
-		else if (list->rw_state == STATE_SHUT_RD) {
-			errno = ENOTCONN;
-			goto not_conn_err;
-		}
-	}
-
-	/* Remove socket from socket management structure. */
-	if (list->rw_state == STATE_SHUT_RDWR) {
-		rc = list_remove_socket(__fd);
-		if (rc < 0) {
-			errno = EBADF;
-			goto list_unlink_err;
-		}
-	}
-
-	/* Call classical interface of shutdown(2). */
-	return shutdown(__fd, __how);
-
-not_conn_err:
-list_elem_err:
-list_unlink_err:
-	return -1;
 }
 
 /*

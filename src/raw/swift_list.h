@@ -2,13 +2,6 @@
 
 #define __SOCK_LIST
 
-enum sock_rw_state {
-	STATE_NO_SHUT,
-	STATE_SHUT_RD,
-	STATE_SHUT_WR,
-	STATE_SHUT_RDWR
-};
-
 enum sock_bind_state {
 	STATE_NOTBOUND,
 	STATE_BOUND
@@ -18,7 +11,6 @@ enum sock_bind_state {
 struct sock_list {
 	int s;
 	struct sockaddr_sw addr;
-	enum sock_rw_state rw_state;
 	enum sock_bind_state bind_state;
 	struct sock_list *next;
 	struct sock_list *prev;

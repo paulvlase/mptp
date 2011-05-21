@@ -24,6 +24,7 @@
 
 #include "swift_types.h"
 #include "swift_list.h"
+
 /*
  * Add new socket to list. Called by sw_socket "syscall".
  */

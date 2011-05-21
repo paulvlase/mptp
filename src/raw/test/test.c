@@ -22,7 +22,6 @@ static void (*test_fun_array[])(void) = {
 	recvfrom_test_suite,
 	sendmsg_test_suite,
 	recvmsg_test_suite,
-	shutdown_test_suite,
 	close_test_suite,
 };
 
