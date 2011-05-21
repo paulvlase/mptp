@@ -60,7 +60,7 @@ static struct sock_list *list_add_socket(int s)
  * Bind socket to given address. Called by sw_bind "syscall".
  */
 
-static struct sock_list *list_update_socket_address(int s, struct sockaddr_sw *addr)
+static struct sock_list *list_update_socket_address(int s, __CONST_SOCKADDR_ARG addr)
 {
 	struct sock_list *ptr;
 
@@ -93,7 +93,7 @@ static struct sock_list *list_elem_from_socket(int s)
  * Get list element containing address addr. Called by sw_bind "syscall".
  */
 
-static struct sock_list *list_elem_from_address(const struct sockaddr_sw *addr)
+static struct sock_list *list_elem_from_address(__CONST_SOCKADDR_ARG addr)
 {
 	struct sock_list *ptr;
 
