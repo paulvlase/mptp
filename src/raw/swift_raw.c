@@ -25,10 +25,18 @@
 #include "swift_types.h"
 #include "swift_raw.h"
 
+enum sock_rw_state {
+	STATE_NO_SHUT,
+	STATE_SHUT_RD,
+	STATE_SHUT_WR,
+	STATE_SHUT_RDWR
+};
+
 /* socket management structure */
 struct sock_list {
 	int s;
 	struct sockaddr_sw addr;
+	enum sock_rw_state rw_state;
 	struct sock_list *next;
 	struct sock_list *prev;
 };
