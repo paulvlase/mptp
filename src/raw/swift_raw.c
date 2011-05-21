@@ -97,9 +97,8 @@ static struct sock_list *list_elem_from_socket(int s)
 	struct sock_list *ptr;
 
 	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
-		if (ptr->s == s) {
+		if (ptr->s == s)
 			return ptr;
-		}
 
 	return NULL;
 }
