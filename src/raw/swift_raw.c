@@ -199,6 +199,9 @@ int sw_socket(int __domain, int __type, int __protocol)
 	/* Socket is fully open. */
 	list->rw_state = STATE_NO_SHUT;
 
+	/* Socket is not bound. */
+	list->bind_state = STATE_NOTBOUND;
+
 	return s;
 
 list_add_err:
@@ -215,6 +218,13 @@ sock_err:
 int sw_bind(int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
 {
 	struct sock_list *list;
+	int rc;
+
+	rc = list_socket_is_bound(__fd);
+	if (rc == 1) {
+		errno = EINVAL;
+		goto socket_bound_err;
+	}
 
 	/* Check whether address is already in use. */
 	list = list_elem_from_address(__addr);
@@ -232,6 +242,7 @@ int sw_bind(int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
 
 	return 0;
 
+socket_bound_err:
 list_update_err:
 list_elem_err:
 	return -1;
