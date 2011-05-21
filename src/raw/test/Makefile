@@ -1,4 +1,5 @@
-#CPPFLAGS = -DDEBUG -DLOG_LEVEL=LOG_DEBUG
+#CPPFLAGS = -DDEBUG -DLOG_LEVEL=LOG_DEBUG -I. -I.. -I../include
+CPPFLAGS = -I. -I.. -I../include
 CFLAGS = -Wall -g
 
 .PHONY: all clean
