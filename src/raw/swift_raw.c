@@ -153,6 +153,9 @@ int sw_socket (int __domain, int __type, int __protocol)
 	if (list == NULL)
 		goto list_add_err;
 
+	/* Socket is fully open. */
+	list->rw_state = STATE_NO_SHUT;
+
 	return s;
 
 list_add_err:
