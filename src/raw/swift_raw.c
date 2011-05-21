@@ -52,6 +52,7 @@ static struct sock_list *list_add_socket(int s)
 	ptr->prev = sock_list_head.prev;
 	sock_list_head.prev->next = ptr;
 	sock_list_head.prev = ptr;
+	ptr->s = s;
 
 	return ptr;
 }
