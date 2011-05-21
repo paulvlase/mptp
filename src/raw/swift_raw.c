@@ -206,9 +206,22 @@ list_elem_err:
 int sw_getsockname(int __fd, __SOCKADDR_ARG __addr,
 			socklen_t *__restrict __len)
 {
-	/* TODO */
+	struct sock_list *list;
+
+	/* Find socket in management structure. */
+	list = list_elem_from_socket(__fd);
+	if (list == NULL) {
+		errno = EBADF;
+		goto list_elem_err;
+	}
+
+	memcpy(__addr, &list->addr, sizeof(list->addr));
+	*__len = sizeof(list->addr);
 
 	return 0;
+
+list_elem_err:
+	return -1;
 }
 
 /*
