@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "swift_types.h"
 #include "swift_raw.h"
@@ -89,6 +90,21 @@ static struct sock_list *list_elem_from_socket(int s)
 }
 
 /*
+ * Get list element containing address addr. Called by sw_bind "syscall".
+ */
+
+static struct sock_list *list_elem_from_address(const struct sockaddr_sw *addr)
+{
+	struct sock_list *ptr;
+
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (memcmp(&ptr->addr, addr, sizeof(addr)) == 0)
+			return ptr;
+
+	return NULL;
+}
+
+/*
  * Remove socket from list. Called by sw_close "syscall".
  */
 
@@ -143,9 +159,26 @@ sock_err:
  */
 int sw_bind (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
 {
-	/* TODO */
+	struct sock_list *list;
+
+	/* Check whether address is already in use. */
+	list = list_elem_from_address(__addr);
+	if (list != NULL) {
+		errno = EADDRINUSE;
+		goto list_elem_err;
+	}
+	/* Update __fd entry in socket management list. */
+	list = list_update_socket_address(__fd, __addr);
+	if (list == NULL) {
+		errno = EBADF;
+		goto list_update_err;
+	}
 
 	return 0;
+
+list_update_err:
+list_elem_err:
+	return -1;
 }
 
 /* Put the local address of FD into *ADDR and its length in *LEN.  */
