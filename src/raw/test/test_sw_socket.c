@@ -34,7 +34,7 @@ void socket_test_suite(void)
 	socket_invalid_domain();
 	socket_invalid_type();
 	socket_invalid_protocol();
-	socket_insufficient_file_descriptors();
+	run_as_child_process(socket_insufficient_file_descriptors);
 	socket_ok();
 }
 
