@@ -140,7 +140,7 @@ static struct sock_list *list_unlink_socket(int s)
  *
  * swift: PROTOCOL is IPPROTO_SWIFT. Ignore TYPE.
  */
-int sw_socket (int __domain, int __type, int __protocol)
+int sw_socket(int __domain, int __type, int __protocol)
 {
 	int s;
 	struct sock_list *list;
@@ -169,7 +169,7 @@ sock_err:
  *
  * swift: ADDR is of type struct sockaddr_sw.
  */
-int sw_bind (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
+int sw_bind(int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
 {
 	struct sock_list *list;
 
@@ -194,7 +194,7 @@ list_elem_err:
 }
 
 /* Put the local address of FD into *ADDR and its length in *LEN.  */
-int sw_getsockname (int __fd, __SOCKADDR_ARG __addr,
+int sw_getsockname(int __fd, __SOCKADDR_ARG __addr,
 			socklen_t *__restrict __len)
 {
 	/* TODO */
@@ -209,7 +209,7 @@ int sw_getsockname (int __fd, __SOCKADDR_ARG __addr,
  * This function is a cancellation point and therefore not marked with
  * __THROW.
  */
-ssize_t sw_sendto (int __fd, __const void *__buf, size_t __n,
+ssize_t sw_sendto(int __fd, __const void *__buf, size_t __n,
 		       int __flags, __CONST_SOCKADDR_ARG __addr,
 		       socklen_t __addr_len)
 {
@@ -229,7 +229,7 @@ ssize_t sw_sendto (int __fd, __const void *__buf, size_t __n,
  * This function is a cancellation point and therefore not marked with
  * __THROW.
  */
-ssize_t sw_recvfrom (int __fd, void *__restrict __buf, size_t __n,
+ssize_t sw_recvfrom(int __fd, void *__restrict __buf, size_t __n,
 			 int __flags, __SOCKADDR_ARG __addr,
 			 socklen_t *__restrict __addr_len)
 {
@@ -247,7 +247,7 @@ ssize_t sw_recvfrom (int __fd, void *__restrict __buf, size_t __n,
  * This function is a cancellation point and therefore not marked with
  * __THROW.
  */
-ssize_t sw_sendmsg (int __fd, __const struct msghdr *__message,
+ssize_t sw_sendmsg(int __fd, __const struct msghdr *__message,
 			int __flags)
 {
 	ssize_t bytes_sent;
@@ -264,7 +264,7 @@ ssize_t sw_sendmsg (int __fd, __const struct msghdr *__message,
  * This function is a cancellation point and therefore not marked with
  * __THROW.
  */
-ssize_t sw_recvmsg (int __fd, struct msghdr *__message, int __flags)
+ssize_t sw_recvmsg(int __fd, struct msghdr *__message, int __flags)
 {
 	ssize_t bytes_recv;
 
@@ -278,7 +278,7 @@ ssize_t sw_recvmsg (int __fd, struct msghdr *__message, int __flags)
  * LEVEL into OPTVAL (which is *OPTLEN bytes long), and set *OPTLEN to the
  * value's actual length.  Returns 0 on success, -1 for errors.
  */
-int sw_getsockopt (int __fd, int __level, int __optname,
+int sw_getsockopt(int __fd, int __level, int __optname,
 		       void *__restrict __optval,
 		       socklen_t *__restrict __optlen)
 {
@@ -292,7 +292,7 @@ int sw_getsockopt (int __fd, int __level, int __optname,
  * Returns 0 on success, -1 for errors.
  */
 
-int sw_setsockopt (int __fd, int __level, int __optname,
+int sw_setsockopt(int __fd, int __level, int __optname,
 		       __const void *__optval, socklen_t __optlen)
 {
 	/* Call classical interface of setsockopt(2). */
@@ -307,7 +307,7 @@ int sw_setsockopt (int __fd, int __level, int __optname,
  *   SHUT_RDWR = No more receptions or transmissions.
  * Returns 0 on success, -1 for errors.
  */
-int sw_shutdown (int __fd, int __how)
+int sw_shutdown(int __fd, int __how)
 {
 	struct sock_list *list;
 
@@ -360,7 +360,7 @@ list_unlink_err:
  * Close file descriptor for socket FD.
  * Returns 0 on success, -1 for errors.
  */
-int sw_close (int __fd)
+int sw_close(int __fd)
 {
 	struct sock_list *list;
 
