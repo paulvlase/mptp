@@ -376,6 +376,7 @@ int sw_setsockopt(int __fd, int __level, int __optname,
 int sw_shutdown(int __fd, int __how)
 {
 	struct sock_list *list;
+	int rc;
 
 	/* Find socket in management structure. */
 	list = list_elem_from_socket(__fd);
@@ -406,8 +407,8 @@ int sw_shutdown(int __fd, int __how)
 
 	/* Remove socket from socket management structure. */
 	if (list->rw_state == STATE_SHUT_RDWR) {
-		list = list_unlink_socket(__fd);
-		if (list == NULL) {
+		rc = list_remove_socket(__fd);
+		if (rc < 0) {
 			errno = EBADF;
 			goto list_unlink_err;
 		}
@@ -428,11 +429,11 @@ list_unlink_err:
  */
 int sw_close(int __fd)
 {
-	struct sock_list *list;
+	int rc;
 
 	/* Remove socket from socket management structure. */
-	list = list_unlink_socket(__fd);
-	if (list == NULL) {
+	rc = list_remove_socket(__fd);
+	if (rc < 0) {
 		errno = EBADF;
 		goto list_unlink_err;
 	}
