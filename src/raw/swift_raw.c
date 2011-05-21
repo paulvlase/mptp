@@ -113,10 +113,6 @@ static struct sock_list *list_elem_from_address(__CONST_SOCKADDR_ARG addr)
 	return NULL;
 }
 
-/*
- * Remove socket from list. Called by sw_close "syscall".
- */
-
 static struct sock_list *list_unlink_socket(int s)
 {
 	struct sock_list *ptr;
@@ -132,6 +128,23 @@ static struct sock_list *list_unlink_socket(int s)
 
 	return NULL;
 }
+
+/*
+ * Remove socket from list. Called by sw_close "syscall".
+ */
+
+static int list_remove_socket(int s)
+{
+	struct sock_list *ptr;
+
+	ptr = list_unlink_socket(s);
+	if (ptr == NULL)
+		return -1;
+
+	free(ptr);
+	return 0;
+}
+
 
 /*
  * Create a new socket of type TYPE in domain DOMAIN, using
