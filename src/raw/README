@@ -23,7 +23,10 @@ Use the test/ folder to test the implementation. Use the Makefile to
 build the test executable and then run it:
       cd test/
       make
-      ./test
+      sudo ./test
+
+Test suite (and other usage of the API) must be run as root as it uses
+raw sockets.
 
 = FILE STRUCTURE =
 
