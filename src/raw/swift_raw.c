@@ -155,7 +155,7 @@ ssize_t sw_sendto(int __fd, __const void *__buf, size_t __n,
  */
 	
 	/* Specify the components of the message in an "iovec".   */
-	__iov[0].iov_base = __buf;
+	__iov[0].iov_base = (void *) __buf;
 	__iov[0].iov_len = __n;
 	
 	/* The message header contains parameters for sendmsg.    */
