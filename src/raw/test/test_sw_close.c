@@ -2,6 +2,21 @@
  * Test sw_close "syscall".
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <errno.h>
+
+#include "swift_raw.h"
+#include "swift_types.h"
+
+#include "debug.h"
+#include "util.h"
+
 #include "test_sw.h"
 #include "test.h"
 
