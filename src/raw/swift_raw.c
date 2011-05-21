@@ -355,3 +355,25 @@ list_elem_err:
 list_unlink_err:
 	return -1;
 }
+
+/*
+ * Close file descriptor for socket FD.
+ * Returns 0 on success, -1 for errors.
+ */
+int sw_close (int __fd)
+{
+	struct sock_list *list;
+
+	/* Remove socket from socket management structure. */
+	list = list_unlink_socket(__fd);
+	if (list == NULL) {
+		errno = EBADF;
+		goto list_unlink_err;
+	}
+
+	/* Call classical interface of close(2). */
+	return close(__fd);
+
+list_unlink_err:
+	return -1;
+}

@@ -116,6 +116,12 @@ extern int sw_setsockopt (int __fd, int __level, int __optname,
  */
 extern int sw_shutdown (int __fd, int __how) __THROW;
 
+/*
+ * Close file descriptor for socket FD.
+ * Returns 0 on success, -1 for errors.
+ */
+extern int sw_close (int __fd);
+
 #ifdef __cplusplus
 }
 #endif
