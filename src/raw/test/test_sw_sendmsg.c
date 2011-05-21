@@ -6,6 +6,10 @@
 #include "test.h"
 
 static void sendmsg_dummy(void);
+static void sendmsg_invalid_descriptor(void);
+static void sendmsg_descriptor_is_not_socket(void);
+static void sendmsg_socket_is_not_bound(void);
+static void sendmsg_ok(void);
 
 void sendmsg_test_suite(void)
 {
