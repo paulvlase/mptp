@@ -179,7 +179,7 @@ int sw_socket(int __domain, int __type, int __protocol)
 	int s;
 	struct sock_list *list;
 
-	if (__domain != PF_INET || __type != SOCK_RAW || __protocol != IPPROTO_SWIFT) {
+	if (__domain != PF_INET || __type != SOCK_DGRAM || __protocol != IPPROTO_SWIFT) {
 		errno = EINVAL;
 		goto sock_err;
 	}
