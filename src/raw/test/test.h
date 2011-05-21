@@ -14,6 +14,12 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 
+/* Test function type. */
+typedef void (*test_fn)(void);
+
+/* Run test function f in another process. */
+void run_as_child_process(test_fn f);
+
 /*
  * uncommend EXIT_IF_FAIL macro in order to stop test execution
  * at first failed test
