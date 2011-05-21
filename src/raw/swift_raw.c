@@ -1,5 +1,5 @@
 /*
- * swift implementation of syscall API>
+ * swift implementation of syscall API
  *
  * Simulates the classic socket syscalls (socket, bind, send, recv).
  * Implementation uses raw sockets (AF_INET, SOCK_RAW).
