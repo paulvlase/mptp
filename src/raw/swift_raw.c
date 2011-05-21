@@ -32,11 +32,17 @@ enum sock_rw_state {
 	STATE_SHUT_RDWR
 };
 
+enum sock_bind_state {
+	STATE_NOTBOUND,
+	STATE_BOUND
+};
+
 /* socket management structure */
 struct sock_list {
 	int s;
 	struct sockaddr_sw addr;
 	enum sock_rw_state rw_state;
+	enum sock_bind_state bind_state;
 	struct sock_list *next;
 	struct sock_list *prev;
 };
@@ -106,9 +112,12 @@ static struct sock_list *list_elem_from_address(__CONST_SOCKADDR_ARG addr)
 {
 	struct sock_list *ptr;
 
-	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next) {
+		if (ptr->bind_state == STATE_NOTBOUND)
+			continue;
 		if (memcmp(&ptr->addr, addr, sizeof(addr)) == 0)
 			return ptr;
+	}
 
 	return NULL;
 }
@@ -145,6 +154,19 @@ static int list_remove_socket(int s)
 	return 0;
 }
 
+static int list_socket_is_bound(int s)
+{
+	struct sock_list *ptr;
+
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (ptr->s == s) {
+			if (ptr->bind_state == STATE_BOUND)
+				return 1;
+			break;
+		}
+
+	return 0;
+}
 
 /*
  * Create a new socket of type TYPE in domain DOMAIN, using
