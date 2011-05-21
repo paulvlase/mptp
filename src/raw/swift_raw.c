@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <unistd.h>
 
 #include "swift_types.h"
 #include "swift_raw.h"
@@ -117,10 +118,22 @@ static struct sock_list *list_unlink_socket(int s)
 int sw_socket (int __domain, int __type, int __protocol)
 {
 	int s;
+	struct sock_list *list;
 
 	s = socket(__domain, SOCK_RAW, IPPROTO_SWIFT);
+	if (s < 0)
+		goto sock_err;
+
+	list = list_add_socket(s);
+	if (list == NULL)
+		goto list_add_err;
 
 	return s;
+
+list_add_err:
+	close(s);
+sock_err:
+	return -1;
 }
 
 /*
