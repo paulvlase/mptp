@@ -106,14 +106,17 @@ static void sendto_ok(void)
 	DIE(rc < 0, "sw_bind");
 
 	bytes_sent = sw_sendto(sockfd, buffer, BUFSIZ, 0, (struct sockaddr *) &remote_addr, sizeof(remote_addr));
+	
+	perror("sw_sendto");
 	test( bytes_sent >= 0 );
+
 }
 
 static void fill_sockaddr_sw(struct sockaddr_sw *local_addr, struct sockaddr_sw *remote_addr, char * local_address, char * hash, char * dest_address) 
 {
-	local_addr->sin_addr.s_addr = htonl((int)local_address);
+	inet_pton(PF_INET, local_address, &(local_addr->sin_addr));
 	memcpy(&local_addr->sw_hash, hash, sizeof(struct sw_hash));
 
-	remote_addr->sin_addr.s_addr = htonl((int)dest_address);
+	inet_pton(PF_INET, dest_address, &(remote_addr->sin_addr));
 	memcpy(&remote_addr->sw_hash, hash, sizeof(struct sw_hash));
 }

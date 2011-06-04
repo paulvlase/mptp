@@ -147,8 +147,11 @@ ssize_t sw_sendto(int __fd, __const void *__buf, size_t __n,
 		errno = EAFNOSUPPORT;
 		goto sock_err;
 	}
- 
-	printf("=== ADDR: %s ===\n", ntohl(__sw_addr->sin_addr.s_addr));
+
+	char str[INET_ADDRSTRLEN];
+
+    inet_ntop(AF_INET, &(__sw_addr->sin_addr), str, INET_ADDRSTRLEN);	
+	printf("=== ADDR: %s ===\n", str);
 
 	/* Specify the components of the message in an "iovec".   */
 	__iov[0].iov_base = (void *) __buf;
@@ -182,10 +185,23 @@ ssize_t sw_recvfrom(int __fd, void *__restrict __buf, size_t __n,
 			 socklen_t *__restrict __addr_len)
 {
 	ssize_t bytes_recv;
+	struct sock_list *list;
+	struct iovec __iov[1];
+	struct msghdr __msgh;
+	struct sockaddr_sw *__sw_addr = (struct sockaddr_sw *) __addr;
 
+	list = list_elem_from_socket(__fd);
+ 	if (list != NULL && list->bind_state == STATE_NOTBOUND) {
+		errno = EAFNOSUPPORT;
+		goto sock_err;
+	}
+ 
 	/* TODO */
 
-	return bytes_recv;
+	return recvmsg(__fd, &__msgh, 0);
+	
+sock_err:
+	return -1;
 }
 
 /*
@@ -200,6 +216,8 @@ ssize_t sw_sendmsg(int __fd, __const struct msghdr *__message,
 {
 	ssize_t bytes_sent;
 
+	/* TODO */
+	
 	return sendmsg(__fd, __message, __flags);
 }
 
@@ -216,7 +234,7 @@ ssize_t sw_recvmsg(int __fd, struct msghdr *__message, int __flags)
 
 	/* TODO */
 
-	return bytes_recv;
+	return recvmsg(__fd, __message, __flags);
 }
 
 /*
