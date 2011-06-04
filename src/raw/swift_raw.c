@@ -22,9 +22,11 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "include/swift_types.h"
-#include "include/swift_raw.h"
-#include "include/swift_list.h"
+#include "swift_types.h"
+#include "swift_raw.h"
+#include "swift_list.h"
+#include "debug.h"
+#include "util.h"
 
 /*
  * Create a new socket of type TYPE in domain DOMAIN, using

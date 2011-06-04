@@ -1,4 +1,4 @@
-CPPFLAGS = -DDEBUG -DLOG_LEVEL=LOG_DEBUG -I. -I.. -I../include
+CPPFLAGS = -DDEBUG -DLOG_LEVEL=LOG_DEBUG -I. -I.. -Iinclude
 #CPPFLAGS = -I. -Iinclude
 CFLAGS = -Wall -g
 
