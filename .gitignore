@@ -1,7 +1,14 @@
-/bin
-/lib
 tags
 TAGS
 *~
 *.o
 *.swp
+*.so
+*.a
+*.zip
+*.tar
+*.gz
+*.bz2
+*.tgz
+*.tbz2
+*.Z
