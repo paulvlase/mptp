@@ -99,15 +99,14 @@ static void sendto_ok(void)
 
 	fill_sockaddr_sw(&local_addr, &remote_addr, "127.0.0.1", "myHash", "127.0.0.1");
 
-
 	sockfd = sw_socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
 	DIE(sockfd < 0, "sw_socket");
 
 	rc = sw_bind(sockfd, (struct sockaddr *) &local_addr, sizeof(local_addr));
 	DIE(rc < 0, "sw_bind");
 
-	
-	test( 1 == 0 );
+	bytes_sent = sw_sendto(sockfd, buffer, BUFSIZ, 0, (struct sockaddr *) &remote_addr, sizeof(remote_addr));
+	test( bytes_sent >= 0 );
 }
 
 static void fill_sockaddr_sw(struct sockaddr_sw *local_addr, struct sockaddr_sw *remote_addr, char * local_address, char * hash, char * dest_address) 
