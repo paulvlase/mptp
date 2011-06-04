@@ -143,15 +143,17 @@ ssize_t sw_sendto(int __fd, __const void *__buf, size_t __n,
 	struct sockaddr_sw *__sw_addr = (struct sockaddr_sw *) __addr;
 
 	list = list_elem_from_socket(__fd);
- 	if (list != NULL && list->bind_state == STATE_NOTBOUND) {
+	if (list != NULL && list->bind_state == STATE_NOTBOUND) {
 		errno = EAFNOSUPPORT;
 		goto sock_err;
 	}
 
-	char str[INET_ADDRSTRLEN];
+	{
+		char str[INET_ADDRSTRLEN];
 
-    inet_ntop(AF_INET, &(__sw_addr->sin_addr), str, INET_ADDRSTRLEN);	
-	printf("=== ADDR: %s ===\n", str);
+		inet_ntop(AF_INET, &(__sw_addr->sin_addr), str, INET_ADDRSTRLEN);	
+		printf("=== ADDR: %s ===\n", str);
+	}
 
 	/* Specify the components of the message in an "iovec".   */
 	__iov[0].iov_base = (void *) __buf;
