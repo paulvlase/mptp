@@ -1,0 +1,19 @@
+swifty - swift implementation in the Linux kernel
+
+Swift is a multiparty protocol implemented at Tranport Layer (layer 4)
+in the OSI stack. It is a form of BitTorrent in kernel space. Check it
+out here: http://libswift.org/
+
+Top level directory structure:
+
+/README: this file
+
+/doc/: documentation files
+
+/src/raw/: raw socket based implementation of a multiparty transport
+protcocol; this is used as a test bed before being ported in the kernel
+
+/src/lib/: old implementation/approach of using a wrapper library on top
+of a specific swift-oriented API
+
+/src/kernel/: kernel implementaion of a multiparty transport protocol
