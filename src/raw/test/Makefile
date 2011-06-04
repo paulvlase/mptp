@@ -11,7 +11,7 @@ test: test.o test_sw_socket.o test_sw_bind.o test_sw_getsockname.o \
 	test_sw_sendmsg.o test_sw_recvmsg.o \
 	test_sw_setsockopt.o test_sw_getsockopt.o \
 	test_sw_close.o test_dummy.o test_common.o \
-	../swift_raw.o ../socket_manager_list.o
+	../swift_raw.o ../socket_manager.o
 
 ../swift_raw.o: ../swift_raw.c ../include/swift_raw.h
 	make -C .. swift_raw.o
