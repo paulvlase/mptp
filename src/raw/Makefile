@@ -6,13 +6,13 @@ CFLAGS = -Wall -g
 
 all: swift_raw_simple_test
 
-swift_raw_simple_test: swift_raw_simple_test.o swift_raw.o swift_list.o
+swift_raw_simple_test: swift_raw_simple_test.o swift_raw.o socket_manager_list.o
 
 swift_raw_simple_test.o: swift_raw_simple_test.c include/swift_raw.h include/util.h
 
-swift_raw.o: swift_raw.c include/swift_list.h include/swift_raw.h include/debug.h include/util.h
+swift_raw.o: swift_raw.c include/socket_manager.h include/swift_raw.h include/debug.h include/util.h
 
-swift_list.o: swift_list.c include/swift_list.h
+socket_manager_list.o: socket_manager_list.c include/socket_manager.h
 
 clean:
 	-rm -f *~
