@@ -15,6 +15,11 @@
 #include "debug.h"
 #include "util.h"
 
+static void usage(const char *argv0)
+{
+	fprintf(stderr, "Usage: %s local_address swift_hash [remote_address]\n", argv0);
+}
+
 /*
  * Create a socket, bind it and send data.
  */
@@ -27,8 +32,8 @@ int main(int argc, char *argv[])
 	ssize_t bytes_sent;
 	int rc;
 
-	if (argc < 3 || argc > 4) {
-		fprintf(stderr,"Usage \"./client ip_local hash ip_dest?\" .");
+	if (argc != 3 && argc != 4) {
+		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
@@ -43,7 +48,7 @@ int main(int argc, char *argv[])
 
 	if (argc > 3) {
 		inet_pton(AF_INET, argv[3], &remote_addr.sin_addr.s_addr);
-		memcpy(&remote_addr.sw_hash, argv[4], sizeof(struct sw_hash));
+		memcpy(&remote_addr.sw_hash, argv[2], sizeof(struct sw_hash));
 		bytes_sent = sw_sendto(sockfd, buffer, BUFSIZ, 0, (struct sockaddr *) &remote_addr, sizeof(remote_addr));
 		DIE(bytes_sent < 0, "sw_sendto");
 	}
