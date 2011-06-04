@@ -59,7 +59,7 @@ static int swift_release(struct socket *sock)
 	struct sock *sk = sock->sk;
 	struct swift_sock * ssk = swift_sk(sk);
 
-	if (!sk)
+	if (unlikely(!sk))
 		return 0;
 
 	swift_unhash(ssk->src);
@@ -86,31 +86,31 @@ static int swift_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 	int err;
 	__be16 port;
 
-	err = -EINVAL;
-	if (addr_len < sizeof(struct sockaddr_swift)) {
+	if (unlikely(addr_len < sizeof(struct sockaddr_swift))) {
 		log_error("Invalid size for sockaddr\n");
+		err = -EINVAL;
 		goto out;
 	}
 
 	swift_addr = (struct sockaddr_swift *) addr;
 
-	err = -EINVAL;
-	if (swift_addr->sin_family != AF_INET) {
+	if (unlikely(swift_addr->sin_family != AF_INET)) {
 		log_error("Invalid family for sockaddr\n");
+		err = -EINVAL;
 		goto out;
 	}
 
 	port = ntohs(swift_addr->sin_port);
 
-	err = -EINVAL;
-	if (port == 0 || port >= MAX_SWIFT_PORT) {
+	if (unlikely(port == 0 || port >= MAX_SWIFT_PORT)) {
 		log_error("Invalid value for sockaddr port (%u)\n", port);
+		err = -EINVAL;
 		goto out;
 	}
 	
-	err = -EADDRINUSE;
-	if (swift_lookup(port) != NULL) {
+	if (unlikely(swift_lookup(port) != NULL)) {
 		log_error("Port %u already in use\n", port);
+		err = -EADDRINUSE;
 		goto out;
 	}
 
@@ -124,7 +124,7 @@ static int swift_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 	return 0;
 
 out:
-	return -EINVAL;
+	return err;
 }
 
 static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_len, int flags)
@@ -136,39 +136,40 @@ static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_le
 
 	log_debug("swift_connect\n");
 
-	err = -EINVAL;
-	if (sock == NULL) {
+	if (unlikely(sock == NULL)) {
 		log_error("Sock is NULL\n");
+		err = -EINVAL;
 		goto out;
 	}
 	sk = sock->sk;
 
-	err = -EINVAL;
-	if (sk == NULL) {
+	if (unlikely(sk == NULL)) {
 		log_error("Sock->sk is NULL\n");
+		err = -EINVAL;
 		goto out;
 	}
-	
+
 	isk = inet_sk(sk);
 	ssk = swift_sk(sk);
 
-	if (ssk->src != 0) {
+	if (unlikely(ssk->src != 0)) {
 		log_error("ssk->src is not NULL\n");
+		err = -EINVAL;
 		goto out;
 	}
 	
-	err = -EINVAL;
-	if (addr) {
+	if (likely(addr)) {
 		struct sockaddr_swift * swift_addr = (struct sockaddr_swift *) addr;
 		
-		err = -EINVAL;
-		if (addr_len < sizeof(*swift_addr) || swift_addr->sin_family != AF_INET) {
+		if (unlikely(addr_len < sizeof(*swift_addr) || swift_addr->sin_family != AF_INET)) {
 			log_error("Invalid size or address family\n");
+			err = -EINVAL;
 			goto out;
 		}
 		ssk->dst = ntohs(swift_addr->sin_port);
-		if (ssk->dst == 0 || ssk->dst >= MAX_SWIFT_PORT) {
+		if (unlikely(ssk->dst == 0 || ssk->dst >= MAX_SWIFT_PORT)) {
 			log_error("Invalid value for destination port(%u)\n", ssk->dst);
+			err = -EINVAL;
 			goto out;
 		}	
 	
@@ -176,13 +177,14 @@ static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_le
 		log_debug("Received from user space destination port=%u and address=%u\n", ssk->dst, isk->inet_daddr);
 	} else {
 		log_error("Invalid swift_addr (NULL)\n");
+		err = -EINVAL;
 		goto out;
 	}
 	
-	err = -ENOMEM;
 	ssk->src = get_next_free_port();
-	if (ssk->src == 0) {
+	if (unlikely(ssk->src == 0)) {
 		log_error("No free ports\n");
+		err = -ENOMEM;
 		goto out;
 	}
 	
@@ -192,7 +194,6 @@ static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_le
 
 out:
 	return err;
-
 }
 
 static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg, size_t len)
@@ -210,16 +211,16 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	int totlen;
 	struct rtable * rt = NULL;
 	
-	err = -EINVAL;
-	if (sock == NULL) {
+	if (unlikely(sock == NULL)) {
 		log_error("Sock is NULL\n");
+		err = -EINVAL;
 		goto out;
 	}
 	sk = sock->sk;
 
-	err = -EINVAL;
-	if (sk == NULL) {
+	if (unlikely(sk == NULL)) {
 		log_error("Sock->sk is NULL\n");
+		err = -EINVAL;
 		goto out;
 	}
 
@@ -228,10 +229,10 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 
 	sport = ssk->src;
 	if (sport == 0) {
-		err = -ENOMEM;
 		sport = get_next_free_port();
-		if (sport == 0) {
+		if (unlikely(sport == 0)) {
 			log_error("No free ports\n");
+			err = -ENOMEM;
 			goto out;
 		}
 	}
@@ -239,24 +240,25 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	if (msg->msg_name) {
 		struct sockaddr_swift * swift_addr = (struct sockaddr_swift *) msg->msg_name;
 		
-		err = -EINVAL;
-		if (msg->msg_namelen < sizeof(*swift_addr) || swift_addr->sin_family != AF_INET) {
+		if (unlikely(msg->msg_namelen < sizeof(*swift_addr) || swift_addr->sin_family != AF_INET)) {
 			log_error("Invalid size or address family\n");
+			err = -EINVAL;
 			goto out;
 		}
 		
 		dport = ntohs(swift_addr->sin_port);
-		if (dport == 0 || dport >= MAX_SWIFT_PORT) {
+		if (unlikely(dport == 0 || dport >= MAX_SWIFT_PORT)) {
 			log_error("Invalid value for destination port(%u)\n", dport);
+			err = -EINVAL;
 			goto out;
 		}	
 
 		daddr = swift_addr->sin_addr.s_addr;
 		log_debug("Received from user space destination port=%u and address=%u\n", dport, daddr);
 	} else {
-		err = -EDESTADDRREQ;
-		if (!ssk->dst || !isk->inet_daddr) {
+		if (unlikely(!ssk->dst || !isk->inet_daddr)) {
 			log_error("No destination port/address\n");
+			err = -EDESTADDRREQ;
 			goto out;
 		}
 		dport = ssk->dst;
@@ -268,7 +270,7 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 
 	totlen = len + sizeof(struct swifthdr) + sizeof(struct iphdr);
 	skb = sock_alloc_send_skb(sk, totlen, msg->msg_flags & MSG_DONTWAIT, &err);
-	if (!skb) {
+	if (unlikely(!skb)) {
 		log_error("sock_alloc_send_skb failed\n");
 		goto out;
 	}
@@ -289,7 +291,7 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	log_debug("payload=%p\n", skb_put(skb, len));
 
 	err = skb_copy_datagram_from_iovec(skb, sizeof(struct swifthdr), msg->msg_iov, 0, len);
-	if (err) {
+	if (unlikely(err)) {
 		log_error("skb_copy_datagram_from_iovec failed\n");
 		goto out_free;
 	}
@@ -304,7 +306,7 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 				    .flags = inet_sk_flowi_flags(sk),
 				  };
 		err = ip_route_output_flow(sock_net(sk), &rt, &fl, sk, 0);
-		if (err) {
+		if (unlikely(err)) {
 			log_error("Route lookup failed\n");
 			goto out_free;
 		}
@@ -312,7 +314,7 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	}
 	
 	err = ip_queue_xmit(skb);
-	if (!err)
+	if (likely(!err))
 		log_debug("Sent %u bytes on wire\n", len);
 	else
 		log_error("ip_queue_xmit failed\n");
@@ -334,7 +336,7 @@ static int swift_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	int err, copied;
 
 	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err);
-	if (!skb) {
+	if (unlikely(!skb)) {
 		log_error("skb_recv_datagram\n");
 		goto out;
 	}
@@ -351,7 +353,7 @@ static int swift_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	}
 
 	err = skb_copy_datagram_iovec(skb, 0, msg->msg_iov, copied);
-	if (err) {
+	if (unlikely(err)) {
 		log_error("skb_copy_datagram_iovec\n");
 		goto out_free;
 	}
@@ -379,7 +381,7 @@ static int swift_rcv(struct sk_buff *skb)
 	struct sockaddr_swift * swift_addr;
 	int err;
 
-	if (!pskb_may_pull(skb, sizeof(struct swifthdr))) {
+	if (unlikely(!pskb_may_pull(skb, sizeof(struct swifthdr)))) {
 		log_error("Insufficient space for header\n");
 		goto drop;
 	}
@@ -387,19 +389,19 @@ static int swift_rcv(struct sk_buff *skb)
 	shdr = (struct swifthdr *) skb->data;
 	len = ntohs(shdr->len);
 
-	if (skb->len < len) {
+	if (unlikely(skb->len < len)) {
 		log_error("Malformed packet (packet_len=%u, skb_len=%u)\n", len, skb->len);
 		goto drop;
 	}
 
-	if (len < sizeof(struct swifthdr)) {
+	if (unlikely(len < sizeof(struct swifthdr))) {
 		log_error("Malformed packet (packet_len=%u sizeof(swifthdr)=%u\n", len, sizeof(struct swifthdr));
 		goto drop;
 	}
 	
 	src = ntohs(shdr->src);
 	dst = ntohs(shdr->dst);
-	if (src == 0 || dst == 0 || src >= MAX_SWIFT_PORT || dst >= MAX_SWIFT_PORT) {
+	if (unlikely(src == 0 || dst == 0 || src >= MAX_SWIFT_PORT || dst >= MAX_SWIFT_PORT)) {
 		log_error("Malformed packet (src=%u, dst=%u)\n", shdr->src, shdr->dst);
 		goto drop;
 	}
@@ -427,7 +429,7 @@ static int swift_rcv(struct sk_buff *skb)
 	log_debug("Setting sin_port=%u, sin_addr=%u\n", ntohs(shdr->src), swift_addr->sin_addr.s_addr);
 
 	err = ip_queue_rcv_skb((struct sock *) &ssk->sock, skb);
-	if (err) {
+	if (unlikely(err)) {
 		log_error("ip_queu_rcv_skb\n");
 		consume_skb(skb);
 	}
@@ -484,13 +486,13 @@ static int __init swift_init(void)
 	int rc;
 
 	rc = proto_register(&swift_prot, 1);
-	if (rc) {
+	if (unlikely(rc)) {
 		log_error("Error registering swift protocol\n");
 		goto out;
 	}
 
 	rc = inet_add_protocol(&swift_protocol, IPPROTO_SWIFT);
-	if (rc) {
+	if (unlikely(rc)) {
 		log_error("Error adding swift protocol\n");
 		goto out_unregister;
 	}
