@@ -14,8 +14,8 @@ MODULE_LICENSE("GPL");
 struct swift_sock {
 	struct inet_sock sock;
 	/* swift socket speciffic data */
-	__be16 src;
-	__be16 dst;
+	uint8_t src;
+	uint8_t dst;
 };
 
 static struct swift_sock * sock_port_map[MAX_SWIFT_PORT];
@@ -30,7 +30,7 @@ static inline struct swifthdr * swift_hdr(const struct sk_buff * skb)
 	return (struct swifthdr *) skb_transport_header(skb);
 }
 
-static inline __be16 get_next_free_port(void)
+static inline uint8_t get_next_free_port(void)
 {
 	int i;
 	for (i = MIN_SWIFT_PORT; i < MAX_SWIFT_PORT; i ++)
@@ -39,17 +39,17 @@ static inline __be16 get_next_free_port(void)
 	return 0;
 }
 
-static inline void swift_unhash(__be16 port)
+static inline void swift_unhash(uint8_t port)
 {
 	sock_port_map[port] = NULL;
 }
 
-static inline void swift_hash(__be16 port, struct swift_sock *ssh)
+static inline void swift_hash(uint8_t port, struct swift_sock *ssh)
 {
 	sock_port_map[port] = ssh;
 }
 
-static inline struct swift_sock * swift_lookup(__be16 port)
+static inline struct swift_sock * swift_lookup(uint8_t port)
 {
 	return sock_port_map[port];
 }
@@ -84,7 +84,7 @@ static int swift_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 	struct sockaddr_swift *swift_addr;
 	struct swift_sock *ssk;
 	int err;
-	__be16 port;
+	uint8_t port;
 
 	if (unlikely(addr_len < sizeof(struct sockaddr_swift))) {
 		log_error("Invalid size for sockaddr\n");
@@ -199,9 +199,9 @@ out:
 static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg, size_t len)
 {
 	int err;
-	__be16 dport;
+	uint8_t dport;
 	__be32 daddr;
-	__be16 sport;
+	uint8_t sport;
 	struct sk_buff * skb;
 	struct sock * sk; 
 	struct inet_sock * isk;
@@ -377,7 +377,7 @@ static int swift_rcv(struct sk_buff *skb)
 	struct swifthdr *shdr;
 	struct swift_sock *ssk;
 	__be16 len;
-	__be16 src, dst;
+	uint8_t src, dst;
 	struct sockaddr_swift * swift_addr;
 	int err;
 

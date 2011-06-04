@@ -9,8 +9,8 @@
 
 #ifdef __KERNEL__
 struct swifthdr {
-	__be16 src;
-	__be16 dst;
+	uint8_t src;
+	uint8_t dst;
 	__be16 len;
 };
 #endif
