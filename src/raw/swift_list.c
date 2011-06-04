@@ -24,6 +24,7 @@
 
 #include "include/swift_types.h"
 #include "include/swift_list.h"
+#include "debug.h"
 
 /*
  * Add new socket to list. Called by sw_socket "syscall".
@@ -55,6 +56,7 @@ struct sock_list *list_update_socket_address(int s, __CONST_SOCKADDR_ARG addr)
         for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
                 if (ptr->s == s) {
                         memcpy(&ptr->addr, addr, sizeof(ptr->addr));
+			ptr->bind_state = STATE_BOUND;
                         return ptr;
                 }
 
@@ -70,7 +72,7 @@ struct sock_list *list_elem_from_socket(int s)
         struct sock_list *ptr;
 
         for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
-                if (ptr->s == s)  
+                if (ptr->s == s)
                         return ptr;
 
         return NULL;
@@ -85,8 +87,10 @@ struct sock_list *list_elem_from_address(__CONST_SOCKADDR_ARG addr)
         struct sock_list *ptr;
 
         for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next) {
+		dprintf("socket address to be checked\n");
                 if (ptr->bind_state == STATE_NOTBOUND)
                         continue;
+		dprintf("bound socket address to be checked\n");
                 if (memcmp(&ptr->addr, addr, sizeof(addr)) == 0)
                         return ptr;
         }
