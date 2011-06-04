@@ -1,0 +1,8 @@
+.built-in*
+.swift*
+*.ko
+built-in.o
+Modules.order
+Module.symvers
+*.mod.
+*.mod.o
