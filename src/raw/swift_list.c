@@ -1,14 +1,8 @@
 /*
- * swift implementation of syscall API
+ * Linked list management for sockets
  *
- * Simulates the classic socket syscalls (socket, bind, send, recv).
- * Implementation uses raw sockets (AF_INET, SOCK_RAW).
- *
- * Subsequently, implementation is to be ported into kernel space and
- * the interface is going to be offered by the Linux syscall API.
- *
- * Heavily inspired by GLIBC's <sys/socket.h>
- * (/usr/include/sys/socket.h).
+ * Use sock_list structure to store information about sockets. Use functions
+ * to add, remove, find and update information in list.
  *
  * 2011, Razvan Deaconescu, razvan.deaconescu@cs.pub.ro
  */
