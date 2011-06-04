@@ -33,17 +33,17 @@
 
 struct sock_list *list_add_socket(int s)
 {
-        struct sock_list *ptr = malloc(sizeof(*ptr));
-        if (ptr == NULL)
-                return NULL;
+	struct sock_list *ptr = malloc(sizeof(*ptr));
+	if (ptr == NULL)
+		return NULL;
 
-        ptr->next = &sock_list_head;
-        ptr->prev = sock_list_head.prev;
-        sock_list_head.prev->next = ptr;
-        sock_list_head.prev = ptr;
-        ptr->s = s;
+	ptr->next = &sock_list_head;
+	ptr->prev = sock_list_head.prev;
+	sock_list_head.prev->next = ptr;
+	sock_list_head.prev = ptr;
+	ptr->s = s;
 
-        return ptr;
+	return ptr;
 }
 
 /*
@@ -52,16 +52,16 @@ struct sock_list *list_add_socket(int s)
 
 struct sock_list *list_update_socket_address(int s, __CONST_SOCKADDR_ARG addr)
 {
-        struct sock_list *ptr;
+	struct sock_list *ptr;
 
-        for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
-                if (ptr->s == s) {
-                        memcpy(&ptr->addr, addr, sizeof(ptr->addr));
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (ptr->s == s) {
+			memcpy(&ptr->addr, addr, sizeof(ptr->addr));
 			ptr->bind_state = STATE_BOUND;
-                        return ptr;
-                }
+			return ptr;
+		}
 
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -70,13 +70,13 @@ struct sock_list *list_update_socket_address(int s, __CONST_SOCKADDR_ARG addr)
 
 struct sock_list *list_elem_from_socket(int s)
 {
-        struct sock_list *ptr;
+	struct sock_list *ptr;
 
-        for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
-                if (ptr->s == s)
-                        return ptr;
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (ptr->s == s)
+			return ptr;
 
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -85,18 +85,18 @@ struct sock_list *list_elem_from_socket(int s)
 
 struct sock_list *list_elem_from_address(__CONST_SOCKADDR_ARG addr)
 {
-        struct sock_list *ptr;
+	struct sock_list *ptr;
 
-        for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next) {
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next) {
 		dprintf("socket address to be checked\n");
-                if (ptr->bind_state == STATE_NOTBOUND)
-                        continue;
+		if (ptr->bind_state == STATE_NOTBOUND)
+			continue;
 		dprintf("bound socket address to be checked\n");
-                if (memcmp(&ptr->addr, addr, sizeof(addr)) == 0)
-                        return ptr;
-        }
+		if (memcmp(&ptr->addr, addr, sizeof(addr)) == 0)
+			return ptr;
+	}
 
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -104,18 +104,18 @@ struct sock_list *list_elem_from_address(__CONST_SOCKADDR_ARG addr)
  */
 static struct sock_list *list_unlink_socket(int s)
 {
-        struct sock_list *ptr;
+	struct sock_list *ptr;
 
-        for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
-                if (ptr->s == s) {
-                        ptr->next->prev = ptr->prev;
-                        ptr->prev->next = ptr->next;
-                        ptr->next = ptr;
-                        ptr->prev = ptr;
-                        return ptr;
-                }
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (ptr->s == s) {
+			ptr->next->prev = ptr->prev;
+			ptr->prev->next = ptr->next;
+			ptr->next = ptr;
+			ptr->prev = ptr;
+			return ptr;
+		}
 
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -124,14 +124,14 @@ static struct sock_list *list_unlink_socket(int s)
 
 int list_remove_socket(int s)
 {
-        struct sock_list *ptr;
+	struct sock_list *ptr;
 
-        ptr = list_unlink_socket(s);
-        if (ptr == NULL)
-                return -1;
+	ptr = list_unlink_socket(s);
+	if (ptr == NULL)
+		return -1;
 
-        free(ptr);
-        return 0;
+	free(ptr);
+	return 0;
 }
 
 /*
@@ -139,14 +139,14 @@ int list_remove_socket(int s)
  */
 int list_socket_is_bound(int s)
 {
-        struct sock_list *ptr;
+	struct sock_list *ptr;
 
-        for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
-                if (ptr->s == s) {
-                        if (ptr->bind_state == STATE_BOUND)
-                                return 1;
-                        break;
-                }
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (ptr->s == s) {
+			if (ptr->bind_state == STATE_BOUND)
+				return 1;
+			break;
+		}
 
-        return 0;
+	return 0;
 }
