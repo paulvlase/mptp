@@ -91,8 +91,8 @@ static void close_ok_descriptor_is_bound(void)
 	s = sw_socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
 	DIE(s < 0, "sw_socket");
 
-	/* TODO: Initialize bind address. */
-
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_addr.s_addr = INADDR_ANY;
 	rc = sw_bind(s, (struct sockaddr *) &addr, sizeof(addr));
 	DIE(rc < 0, "sw_bind");
 
