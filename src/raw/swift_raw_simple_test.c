@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 
 #include "swift_types.h"
 #include "swift_raw.h"
@@ -26,27 +27,24 @@ int main(int argc, char *argv[])
 	ssize_t bytes_sent;
 	int rc;
 
-	if (argc < 3)
-	{
+	if (argc < 3 || argc > 4) {
 		fprintf(stderr,"Usage \"./client ip_local hash ip_dest?\" .");
+		exit(EXIT_FAILURE);
 	}
 
 	sockfd = sw_socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
 	DIE(sockfd < 0, "sw_socket");
 
-	/* TODO: init_addr */
-	local_addr.sin_addr.s_addr = htonl(argv[1]);
+	memset(&local_addr, 0, sizeof(local_addr));
+	inet_pton(AF_INET, argv[1], &local_addr.sin_addr.s_addr);
 	memcpy(&local_addr.sw_hash, argv[2], sizeof(struct sw_hash));
 	rc = sw_bind(sockfd, (struct sockaddr *) &local_addr, sizeof(local_addr));
 	DIE(rc < 0, "sw_bind");
 
-	/* TODO: init remote_addr */
-	if (argv > 3)
-	{
-		remote_addr.sin_addr.s_addr = htonl(argv[1]);
-		memcpy(&remote_addr.sw_hash, argv[3], sizeof(struct sw_hash));
-		bytes_sent = sw_sendto(sockfd, buffer, BUFSIZ, 0,
-					(struct sockaddr *) &remote_addr, sizeof(remote_addr));
+	if (argc > 3) {
+		inet_pton(AF_INET, argv[3], &remote_addr.sin_addr.s_addr);
+		memcpy(&remote_addr.sw_hash, argv[4], sizeof(struct sw_hash));
+		bytes_sent = sw_sendto(sockfd, buffer, BUFSIZ, 0, (struct sockaddr *) &remote_addr, sizeof(remote_addr));
 		DIE(bytes_sent < 0, "sw_sendto");
 	}
 
