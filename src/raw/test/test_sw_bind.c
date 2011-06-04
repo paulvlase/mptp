@@ -80,6 +80,7 @@ static void bind_invalid_ip_address(void)
 
 	sockfd = sw_socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
 	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
 	inet_pton(AF_INET, "254.254.254.254", &addr.sin_addr.s_addr);
 	rc = sw_bind(sockfd, (struct sockaddr *) &addr, sizeof(addr));
 
@@ -101,6 +102,7 @@ static void bind_ok(void)
 
 	sockfd = sw_socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
 	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;
 	rc = sw_bind(sockfd, (struct sockaddr *) &addr, sizeof(addr));
 
@@ -117,12 +119,14 @@ static void bind_address_in_use(void)
 
 	sockfd1 = sw_socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
 	memset(&addr1, 0, sizeof(addr1));
+	addr1.sin_family = AF_INET;
 	addr1.sin_addr.s_addr = INADDR_ANY;
 	rc = sw_bind(sockfd1, (struct sockaddr *) &addr1, sizeof(addr1));
 	dprintf("after first sw_bind rc = %d\n", rc);
 
 	sockfd2 = sw_socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
 	memset(&addr2, 0, sizeof(addr2));
+	addr2.sin_family = AF_INET;
 	addr2.sin_addr.s_addr = INADDR_ANY;
 	rc = sw_bind(sockfd2, (struct sockaddr *) &addr2, sizeof(addr2));
 	dprintf("after second sw_bind rc = %d\n", rc);
@@ -141,10 +145,12 @@ static void bind_socket_already_bound(void)
 
 	sockfd = sw_socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
 	memset(&addr1, 0, sizeof(addr1));
+	addr1.sin_family = AF_INET;
 	addr1.sin_addr.s_addr = INADDR_ANY;
 	rc = sw_bind(sockfd, (struct sockaddr *) &addr1, sizeof(addr1));
 
 	memset(&addr2, 0, sizeof(addr2));
+	addr2.sin_family = AF_INET;
 	addr2.sin_addr.s_addr = INADDR_ANY;
 	addr2.sw_hash.h_array[0] = 0xFF;	/* chage hash ("port") */
 	rc = sw_bind(sockfd, (struct sockaddr *) &addr2, sizeof(addr2));

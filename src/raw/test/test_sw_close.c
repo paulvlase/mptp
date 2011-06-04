@@ -92,6 +92,7 @@ static void close_ok_descriptor_is_bound(void)
 	DIE(s < 0, "sw_socket");
 
 	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;
 	rc = sw_bind(s, (struct sockaddr *) &addr, sizeof(addr));
 	DIE(rc < 0, "sw_bind");
