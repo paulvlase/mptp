@@ -15,7 +15,6 @@ struct swift_sock {
 	/* swift socket speciffic data */
 	__be16 src;
 	__be16 dst;
-	__be16 len;
 };
 
 static struct swift_sock * sock_port_map[MAX_SWIFT_PORT];
@@ -129,8 +128,70 @@ out:
 
 static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_len, int flags)
 {
+	int err;
+	struct sock * sk; 
+	struct inet_sock * isk;
+	struct swift_sock * ssk;
+
 	printk(KERN_DEBUG "swift_connect\n");
+
+	err = -EINVAL;
+	if (sock == NULL) {
+		printk(KERN_ERR "Sock is NULL\n");
+		goto out;
+	}
+	sk = sock->sk;
+
+	err = -EINVAL;
+	if (sk == NULL) {
+		printk(KERN_ERR "Sock->sk is NULL\n");
+		goto out;
+	}
+	
+	isk = inet_sk(sk);
+	ssk = swift_sk(sk);
+
+	if (ssk->src != 0) {
+		printk(KERN_ERR "ssk->src is not NULL\n");
+		goto out;
+	}
+	
+	err = -EINVAL;
+	if (addr) {
+		struct sockaddr_swift * swift_addr = (struct sockaddr_swift *) addr;
+		
+		err = -EINVAL;
+		if (addr_len < sizeof(*swift_addr) || swift_addr->sin_family != AF_INET) {
+			printk(KERN_ERR "Invalid size or address family\n");
+			goto out;
+		}
+		ssk->dst = ntohs(swift_addr->sin_port);
+		if (ssk->dst == 0 || ssk->dst >= MAX_SWIFT_PORT) {
+			printk(KERN_ERR "Invalid value for destination port(%u)\n", ssk->dst);
+			goto out;
+		}	
+	
+		isk->inet_daddr = swift_addr->sin_addr.s_addr;
+		printk(KERN_DEBUG "Received from user space destination port=%u and address=%u\n", ssk->dst, isk->inet_daddr);
+	} else {
+		printk(KERN_ERR "Invalid swift_addr (NULL)\n");
+		goto out;
+	}
+	
+	err = -ENOMEM;
+	ssk->src = get_next_free_port();
+	if (ssk->src == 0) {
+		printk(KERN_ERR "No free ports\n");
+		goto out;
+	}
+	
+	swift_hash(ssk->src, ssk);
+
 	return 0;
+
+out:
+	return err;
+
 }
 
 static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg, size_t len)
@@ -161,15 +222,18 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 		goto out;
 	}
 
-	err = -ENOMEM;
-	sport = get_next_free_port();
-	if (sport == 0) {
-		printk(KERN_ERR "No free ports\n");
-		goto out;
-	}
-
 	isk = inet_sk(sk);
 	ssk = swift_sk(sk);
+
+	sport = ssk->src;
+	if (sport == 0) {
+		err = -ENOMEM;
+		sport = get_next_free_port();
+		if (sport == 0) {
+			printk(KERN_ERR "No free ports\n");
+			goto out;
+		}
+	}
 
 	if (msg->msg_name) {
 		struct sockaddr_swift * swift_addr = (struct sockaddr_swift *) msg->msg_name;
