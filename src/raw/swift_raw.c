@@ -25,7 +25,7 @@
 
 #include "swift_types.h"
 #include "swift_raw.h"
-#include "swift_list.h"
+#include "socket_manager.h"
 #include "debug.h"
 #include "util.h"
 
@@ -39,7 +39,7 @@
 int sw_socket(int __domain, int __type, int __protocol)
 {
 	int s;
-	struct sock_list *list;
+	int rc;
 
 	if (__domain != PF_INET || __type != SOCK_DGRAM || __protocol != IPPROTO_SWIFT) {
 		errno = EINVAL;
@@ -51,14 +51,14 @@ int sw_socket(int __domain, int __type, int __protocol)
 		goto sock_err;
 	}
 
-	list = list_add_socket(s);
-	if (list == NULL) {
+	rc = sm_add(s);
+	if (rc < 0) {
 		errno = ENOMEM;
 		goto list_add_err;
 	}
 
 	/* Socket is not bound. */
-	list->bind_state = STATE_NOTBOUND;
+	sm_mark_unbound(s);
 
 	return s;
 
@@ -75,34 +75,35 @@ sock_err:
  */
 int sw_bind(int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
 {
-	struct sock_list *list;
 	int rc;
 
-	rc = list_socket_is_bound(__fd);
+	rc = sm_is_bound(__fd);
 	if (rc == 1) {
 		errno = EINVAL;
 		goto socket_bound_err;
 	}
 
 	/* Check whether address is already in use. */
-	list = list_elem_from_address(__addr);
-	if (list != NULL) {
+	rc = sm_address_exists(__addr);
+	if (rc == 1) {
 		errno = EADDRINUSE;
-		goto list_elem_err;
+		goto address_err;
 	}
 
 	/* Update __fd entry in socket management list. */
-	list = list_update_socket_address(__fd, __addr);
-	if (list == NULL) {
+	rc = sm_update_address(__fd, __addr);
+	if (rc < 0) {
 		errno = EBADF;
-		goto list_update_err;
+		goto update_err;
 	}
+
+	sm_mark_bound(__fd);
 
 	return 0;
 
+update_err:
+address_err:
 socket_bound_err:
-list_update_err:
-list_elem_err:
 	return -1;
 }
 
@@ -110,21 +111,21 @@ list_elem_err:
 int sw_getsockname(int __fd, __SOCKADDR_ARG __addr,
 			socklen_t *__restrict __len)
 {
-	struct sock_list *list;
+	struct sockaddr *addr;
 
 	/* Find socket in management structure. */
-	list = list_elem_from_socket(__fd);
-	if (list == NULL) {
-		errno = EBADF;
-		goto list_elem_err;
+	addr = sm_get_address(__fd);
+	if (addr == NULL) {
+		errno = EINVAL;
+		goto address_err;
 	}
 
-	memcpy(__addr, &list->addr, sizeof(list->addr));
-	*__len = sizeof(list->addr);
+	memcpy(__addr, &addr, sizeof(addr));
+	*__len = sizeof(addr);
 
 	return 0;
 
-list_elem_err:
+address_err:
 	return -1;
 }
 
@@ -140,13 +141,13 @@ ssize_t sw_sendto(int __fd, __const void *__buf, size_t __n,
 		       socklen_t __addr_len)
 {
 	ssize_t bytes_sent;
-	struct sock_list *list;
 	struct iovec __iov[1];
 	struct msghdr __msgh;
 	struct sockaddr_sw *__sw_addr = (struct sockaddr_sw *) __addr;
+	int rc;
 
-	list = list_elem_from_socket(__fd);
-	if (list != NULL && list->bind_state == STATE_NOTBOUND) {
+	rc = sm_is_bound(__fd);
+	if (rc < 0) {
 		errno = EAFNOSUPPORT;
 		goto sock_err;
 	}
@@ -190,17 +191,17 @@ ssize_t sw_recvfrom(int __fd, void *__restrict __buf, size_t __n,
 			 socklen_t *__restrict __addr_len)
 {
 	ssize_t bytes_recv;
-	struct sock_list *list;
 	struct iovec __iov[1];
 	struct msghdr __msgh;
 	struct sockaddr_sw *__sw_addr = (struct sockaddr_sw *) __addr;
+	int rc;
 
-	list = list_elem_from_socket(__fd);
- 	if (list != NULL && list->bind_state == STATE_NOTBOUND) {
+	rc = sm_is_bound(__fd);
+	if (rc < 0) {
 		errno = EAFNOSUPPORT;
 		goto sock_err;
 	}
- 
+
 	/* TODO */
 
 	return recvmsg(__fd, &__msgh, 0);
@@ -276,15 +277,15 @@ int sw_close(int __fd)
 	int rc;
 
 	/* Remove socket from socket management structure. */
-	rc = list_remove_socket(__fd);
+	rc = sm_del(__fd);
 	if (rc < 0) {
 		errno = EBADF;
-		goto list_unlink_err;
+		goto del_err;
 	}
 
 	/* Call classical interface of close(2). */
 	return close(__fd);
 
-list_unlink_err:
+del_err:
 	return -1;
 }

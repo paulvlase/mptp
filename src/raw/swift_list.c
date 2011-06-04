@@ -17,52 +17,35 @@
 #include <errno.h>
 
 #include "swift_types.h"
-#include "swift_list.h"
+#include "socket_manager.h"
 #include "debug.h"
 #include "util.h"
 
-/*
- * Add new socket to list. Called by sw_socket "syscall".
- */
+enum sock_bind_state {
+	STATE_NOTBOUND,
+	STATE_BOUND
+};
 
-struct sock_list *list_add_socket(int s)
-{
-	struct sock_list *ptr = malloc(sizeof(*ptr));
-	if (ptr == NULL)
-		return NULL;
+/* socket management structure */
+struct sock_list {
+	int s;
+	struct sockaddr addr;
+	enum sock_bind_state bind_state;
+	struct sock_list *next;
+	struct sock_list *prev;
+};
 
-	ptr->next = &sock_list_head;
-	ptr->prev = sock_list_head.prev;
-	sock_list_head.prev->next = ptr;
-	sock_list_head.prev = ptr;
-	ptr->s = s;
-
-	return ptr;
-}
-
-/*
- * Bind socket to given address. Called by sw_bind "syscall".
- */
-
-struct sock_list *list_update_socket_address(int s, __CONST_SOCKADDR_ARG addr)
-{
-	struct sock_list *ptr;
-
-	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
-		if (ptr->s == s) {
-			memcpy(&ptr->addr, addr, sizeof(ptr->addr));
-			ptr->bind_state = STATE_BOUND;
-			return ptr;
-		}
-
-	return NULL;
-}
+/* socket management list head */
+static struct sock_list sock_list_head = {
+	.next = &sock_list_head,
+	.prev = &sock_list_head
+};
 
 /*
- * Get list element containing socket s. Called by sw_send* "syscalls".
+ * Find socket in socket management list.
  */
 
-struct sock_list *list_elem_from_socket(int s)
+static struct sock_list *list_get_link(int s)
 {
 	struct sock_list *ptr;
 
@@ -74,73 +57,173 @@ struct sock_list *list_elem_from_socket(int s)
 }
 
 /*
- * Get list element containing address addr. Called by sw_bind "syscall".
+ * Find socket in socket management list by address.
  */
 
-struct sock_list *list_elem_from_address(__CONST_SOCKADDR_ARG addr)
+static struct sock_list *list_get_link_by_address(const struct sockaddr *addr)
 {
 	struct sock_list *ptr;
 
-	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next) {
-		dprintf("socket address to be checked\n");
-		if (ptr->bind_state == STATE_NOTBOUND)
-			continue;
-		dprintf("bound socket address to be checked\n");
-		if (memcmp(&ptr->addr, addr, sizeof(addr)) == 0)
+	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
+		if (memcmp(addr, &ptr->addr, sizeof(*addr)) == 0)
 			return ptr;
-	}
 
 	return NULL;
 }
 
 /*
- * Unlink socket from list. Called by list_remove_socket.
+ * Unlink socket from list. Called by sm_del.
  */
-static struct sock_list *list_unlink_socket(int s)
+
+static void list_unlink(struct sock_list *ptr)
+{
+	ptr->next->prev = ptr->prev;
+	ptr->prev->next = ptr->next;
+	ptr->next = ptr;
+	ptr->prev = ptr;
+}
+
+/*
+ * Link socket to list. Add socket to tail of list.
+ */
+
+static void list_link(struct sock_list *ptr)
+{
+	ptr->next = &sock_list_head;
+	ptr->prev = sock_list_head.prev;
+	sock_list_head.prev->next = ptr;
+	sock_list_head.prev = ptr;
+}
+
+/*
+ * Add new socket to list. Called by sw_socket "syscall".
+ */
+
+int sm_add(int s)
+{
+	struct sock_list *ptr = malloc(sizeof(*ptr));
+	if (ptr == NULL)
+		return -1;
+
+	ptr->s = s;
+	list_link(ptr);
+
+	return 0;
+}
+
+/*
+ * Bind socket to given address. Called by sw_bind "syscall".
+ */
+
+int sm_update_address(int s, const struct sockaddr *addr)
 {
 	struct sock_list *ptr;
 
-	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
-		if (ptr->s == s) {
-			ptr->next->prev = ptr->prev;
-			ptr->prev->next = ptr->next;
-			ptr->next = ptr;
-			ptr->prev = ptr;
-			return ptr;
-		}
+	ptr = list_get_link(s);
+	if (ptr == NULL)
+		return -1;
 
-	return NULL;
+	memcpy(&ptr->addr, addr, sizeof(ptr->addr));
+
+	return 0;
 }
 
 /*
  * Remove socket from list. Called by sw_close "syscall".
  */
 
-int list_remove_socket(int s)
+int sm_del(int s)
 {
 	struct sock_list *ptr;
 
-	ptr = list_unlink_socket(s);
+	ptr = list_get_link(s);
 	if (ptr == NULL)
 		return -1;
 
+	list_unlink(ptr);
 	free(ptr);
+
 	return 0;
 }
 
 /*
  * Check if a socket is bound.
  */
-int list_socket_is_bound(int s)
+
+int sm_is_bound(int s)
 {
 	struct sock_list *ptr;
 
-	for (ptr = sock_list_head.next; ptr != &sock_list_head; ptr = ptr->next)
-		if (ptr->s == s) {
-			if (ptr->bind_state == STATE_BOUND)
-				return 1;
-			break;
-		}
+	ptr = list_get_link(s);
+	if (ptr == NULL)
+		return 0;
+
+	if (ptr->bind_state == STATE_BOUND)
+		return 1;
 
 	return 0;
+}
+
+/*
+ * Mark socket as bound.
+ */
+
+int sm_mark_bound(int s)
+{
+	struct sock_list *ptr;
+	
+	ptr = list_get_link(s);
+	if (ptr == NULL)
+		return -1;
+
+	ptr->bind_state = STATE_BOUND;
+
+	return 0;
+}
+
+/*
+ * Mark socket as unbound.
+ */
+
+int sm_mark_unbound(int s)
+{
+	struct sock_list *ptr;
+
+	ptr = list_get_link(s);
+	if (ptr == NULL)
+		return -1;
+
+	ptr->bind_state = STATE_NOTBOUND;
+
+	return 0;
+}
+
+/*
+ * Check if adress is asociated with a given socket.
+ */
+
+int sm_address_exists(const struct sockaddr *addr)
+{
+	struct sock_list *ptr;
+
+	ptr = list_get_link_by_address(addr);
+	if (ptr == NULL)
+		return 0;
+
+	return 1;
+}
+
+/*
+ * Find socket address.
+ */
+
+struct sockaddr *sm_get_address(int s)
+{
+	struct sock_list *ptr;
+
+	ptr = list_get_link(s);
+	if (ptr == NULL)
+		return NULL;
+
+	return &ptr->addr;
 }
