@@ -1,4 +1,5 @@
 #include <linux/module.h>
+#include <linux/version.h>
 #include <net/sock.h>
 #include <net/protocol.h>
 #include <net/ip.h>
@@ -310,7 +311,11 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 			log_error("Route lookup failed\n");
 			goto out_free;
 		}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+		sk_dst_set(sk, dst_clone(&rt->u.dst));
+#else
 		sk_dst_set(sk, dst_clone(&rt->dst));
+#endif
 	}
 	
 	err = ip_queue_xmit(skb);
