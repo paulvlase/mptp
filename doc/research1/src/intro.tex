@@ -1,0 +1,30 @@
+%\section{\fontfamily{phv}\selectfont{\large{\bfseries{INTRODUCTION}}}}
+
+The \emph{swift} protocol is a generic multiparty transport protocol. Its mission is to disseminate content among a 
+swarm of peers. Basically, it answers one and only one request: \emph{'Here is a hash! Give me data for it!'}. Such
+entities as storage, servers and connections are abstracted and are virtually invisible at the API layer. Given a hash,
+the data is received from whatever source available and data integrity is checked cryptographically with Merkle hash
+trees.
+
+If you need some data it is somewhat faster and/or cheaper downloading it from a nearby well-provisioned replica, but 
+on the other hand, this process requires that multiple parties (e.g. consumers, the data sources, CDN
+sites\cite{cdnwiki} , mirrors, peers) have to be coordinate. As the Internet content  is in a continuous increasing
+nowadays, the overhead of peer/replica coordination becomes higher then the mass of the download itself. Thus, the niche
+for multiparty transfers expands. Still, current, relevant technologies are tightly coupled to a single use case or even
+infrastructure of a particular corporation. These are the reasons of the \emph{swift} protocol appearance with its
+primary goal to act as a generic content-centric multiparty transport protocol that allows seamless, effortless data
+dissemination on the big cloud represented by the Internet.
+
+\textbf{Contribution}. Our main objective is to integrate \emph{swift} as a transport protocol in the Linux kernel
+networking stack. This will provide notable performance improvement regarding data transfer. We intend to do this with
+minimal intrusion effect in the Linux kernel and also to change as little as possible the current \emph{swift}
+implementation. Another goal is to provide a transparent API between the kernel and the user space. A developer will use
+a socket-like interface when building an application on top of the \emph{swift} protocol.
+
+\textbf{Outline}. The rest of the paper is organized as follows. In section \ref{sec:relatedwork} we discuss related
+work, regarding the \emph{swift} protocol, transport layer protocols, bitTorrent and LEDBAT. In section \ref{sec:swift}
+we describe the existing \emph{swift} protocol design choices. Section \ref{sec:implementation} presents our approach to
+integrate the \emph{swift} protocol as a transport layer protocol into the Linux kernel. We discuss about our motivation
+and goals and the architectural challenges that we have encountered. Section \ref{sec:example} gives an usage example,
+which highlights the basic steps for working with the API. In section \ref{sec:results} we describe the
+theoretical results of our proposal. Section \ref{sec:summary} concludes the article and refers to future work.

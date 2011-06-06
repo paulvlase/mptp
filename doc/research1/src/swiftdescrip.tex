@@ -1,0 +1,81 @@
+%\section{\fontfamily{phv}\selectfont{\large{\bfseries{SWIFT PROTOCOL DESCRIPTION}}}}
+
+Most features of the \emph{swift} protocol are defined by its function as a content-centric multiparty transport 
+protocol. A significant difference between \emph{swift} and the TCP protocol is that TCP possesses no information
+regarding what data it is dealing with, as the data is passed from the user-space, while the \emph{swift} protocol has
+data fixed in advance and many peers participate in distributing the same data. Because of this and the fact that for
+\emph{swift} the order of delivery is of little importance and unreliability is naturally compensated for by redundancy,
+it entirely drops TCP's abstraction of sequential reliable data stream delivery. For example, out-of-order data could
+still be saved and the same piece of data might always be received from another peer.
+
+Being implemented over UDP, the protocol does its best to make every datagram self-contained so each datagram could be 
+processed separately and a loss of one datagram must not disrupt the flow. Thus, a datagram carries zero or more
+messages, and neither messages nor message interdependencies should span over multiple datagrams. 
+
+The verification of data pieces is realize using Merkle hash trees\cite{merkle}, \cite{merkle-ext}. That means that all
+hashes necessary for verifying data integrity needs to be put into the same datagram as the data. For both use cases,
+streaming and downloading, an unified  integrity checking scheme that works down to the level of a single datagram is
+developed. As a general rule, the sender should append to the data some meta-data represented by the necessary hashes
+for the data verification. While some optimistic optimizations are definitely possible, the receiver should drop data if
+it is impossible to verify it. Before sending a packet of data to the receiver, the sender inspects the receiver's
+previous acknowledgments to derive which hashes the receiver already has for sure. 
+
+The data is acknowledged in terms of binary intervals, with the base interval of 1KB "packet". As a result, every 
+single packet is acknowledged logarithmic number of times. This mechanism provides some necessary redundancy of the
+acknowledgements and sufficiently compensates the unreliability of the datagrams. 
+
+The only function of TCP that is also critical for \emph{swift} is the congestion control. To facilitate delay-based 
+congestion control an acknowledgment contains besides the dimension of the file received from its addressee a timestamp.
+
+Binary intervals numbering is done in the order of interval's "center", ascending, namely:
+
+
+%\hspace*{3.75cm}               7
+%
+%\vspace*{-0.3cm}
+%\hspace*{2.7cm}  3 \hspace*{1.65cm}  11
+%
+%\vspace*{-0.22cm}
+%\hspace*{2.2cm} 1 \hspace*{0.6cm} 5 \hspace*{0.7cm} 9 \hspace*{0.8cm} 13
+%
+%\vspace*{-0.17cm}
+%\hspace*{1.85cm} 0 \hspace*{0.2cm} 2 \hspace*{0.2cm} 4 \hspace*{0.1cm} 6 \hspace*{0.2cm} 8 \hspace*{0.1cm} 10
+%\hspace*{0.1cm} 12 \hspace*{0.1cm} 14
+
+\image[scale=0.28]{img/tree}{img:tree}{Binary interval tree}
+
+Suppose, the receiver had acknowledged the first binary interval, then it must already have uncle hashes 5, 11 and so on. 
+That is because those hashes are necessary to check the packets of the first two kilobytes acknowledged against the 
+root hash. Then, hashes 3, 7 and so on must be also known as they are calculated in the process of checking the uncle
+hash chain. Hence, to send the 12 binary interval, which represents the 7th kilobyte of data, the sender needs to
+prepend hashes for binary intervals 14 and 9. This are the only hashes needed to check the against hash 11 which is
+already known to the receiver.
+
+The sender may optimistically skip hashes which were sent out in previous (still unacknowledged) datagrams. It is an 
+optimization trade off between redundant hash transmission and possibility of collateral data loss in the case some
+necessary hashes were lost in the network so some delivered data cannot be verified and thus has to be dropped. In
+either case, the receiver builds the Merkle tree on-demand, incrementally, starting from the root hash, and uses it for
+data validation.
+
+The concept of peak hashes enables two cornerstone features of \emph{swift}: download and streaming unification and
+file size proving. Formally, peak hashes are hashes defined over filled binary intervals, whose parent hashes are
+defined over incomplete, not filled, binary intervals. Filled binary intervals is a binary interval which does not
+extend past the end of the file, or, more precisely, contains no empty packets. Practically, we use peaks to cover the
+data range with logarithmic number of hashes, so each hash is defined over a "round" aligned $2^k$ interval.
+
+The classical problem of keeping huge bitmaps predominantly consisting of long ranges of zeros and ones is most often 
+encountered in file systems (free space tracking) and network protocols (transmission progress tracking). For this
+problem three common solutions are available: plain bitmaps, extent lists and extent binary trees. Bitmaps are simple
+but have high fixed space requirements. Lists are able to aggregate solid ranges, but they don’t scale well with regard
+to search. Extent binary trees are able of aggregation, allow scalable search, but have high overhead and extremely bad 
+worst case behavior, potentially exploding to sizes a couple orders of magnitude higher than plain bitmaps. The latter
+problem is sometimes resolved by ad-hoc means, e.g. by converting parts of an extent tree to bitmaps. Another possible
+workaround is to impose a divide-and-conquer multilayered unit system (BitTorrent \cite{bittorrent}).
+
+\emph{Swift} solution is a new data structure named “binmap”\cite{binmaps}, a hybrid of bitmap and binary tree, which
+resolves the shortcomings of the extent binary tree approach. Namely it has lower average-case overhead and as it is
+tolerant to patchy bitmaps, its worst-case behavior is dramatically better.
+
+\input{src/tab2}
+
+\input{src/tab1}

@@ -1,0 +1,40 @@
+In the next table we will discuss a comparison between \emph{swift} application and BitTorrent. We take into
+consideration the most important features that we have in \emph{swift} and BitTorrent.   
+
+\begin{center}
+  \begin{tabular}{|c|c|c|}
+	  \toprule
+	  \centering{Properties} & \multicolumn{2}{|c|}{Protocols} \\
+	  \cmidrule(r){2-3}
+	  & Swift & BitTorrent \\
+	  \midrule
+	  Listening Ports  & 1 & 1 \\
+	  \midrule
+	  Sockets create for getting M pieces & 1 & M \\
+	  \midrule
+	  Packets receive for sending 1 piece & 1 & 1 \\
+	  \midrule
+	  Packets send for sending 1 piece & 1 & $Nr_{fails} + 1$\\
+	  \midrule
+	  Packets send for getting 1 piece & N & $Nr_{fails} + 1$ \\
+	  \midrule
+	  Packets receive for getting 1 piece & N & $Nr_{fails} + 1$ \\
+	  \midrule
+	  Util packages when getting 1 piece & 1 & 1 \\
+	  \midrule
+	  Recall posibility  & $\approx$$\frac{100}{2^{N}}\%$ & $0\%$ \\
+	  \midrule
+	  Time to getting M piece & $M * T_{fastest}$ & $T_{slowest}$ \\
+	  \midrule
+	  Bandwidth used   & high usage & high usage \\
+	  \bottomrule
+  \end{tabular}
+\end{center}
+
+This comparison table highlights the advantages of \emph{swift} over BitTorrent. \emph{Swift} uses a socket per file,
+whereas BitTorrent opens as many as M sockets. This is particularly useful for big files. Also, if BitTorrent connects
+to a lower seeder the waiting time will be bigger compared to \emph{swift}. 
+
+In the case of transferring many small files, BitTorrent will be better than \emph{swift}. Another case when
+\emph{swift} is less than BitTorrent is for the first transfer between a peer and a seeder. Both of them use the same
+bandwidth, but the overall performance appears to be better for \emph{swift} in the Internet. 

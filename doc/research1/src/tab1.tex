@@ -1,0 +1,39 @@
+
+The second table highlights the main differences between three transport protocols UDP, TCP and \emph{swift}. In
+a perfect network UDP is the fastest way to transfer data, but in a real network problem arises because of corrupt
+packets or failed transfers. TCP ensures the correct transmission and because of this it's slower than UDP. \emph{Swift}
+tries to make a compromise between UDP and TCP. \emph{Swift} is a connection-less protocol, but checks the validity of
+the received data. Also, transfers are made between more seeders, not just between a server and a host like TCP does.
+Thus, in a real network, \emph{Swift} is more secure than UDP and faster than TCP.
+
+
+\begin{center}
+    \begin{tabular}{|c|c|c|c|}
+        \toprule
+        Properties & \multicolumn{3}{|c|}{Protocols} \\
+        \cmidrule(r){2-4}
+         & Swift & UDP & TCP \\
+        \midrule
+        Sockets  & 1 & 1 & 1 \\
+        \midrule
+        Listening Ports  & 1 & 1 & 1 \\
+        \midrule
+        Packets received for sending data  & 1 & 1 & 1 \\
+        \midrule
+        Packets sent for sending data  & 1 & 1 & $Nr_{fails} + 1$ \\
+        \midrule
+        Packets sent for getting data  & N & 1 & $Nr_{fails} + 1$ \\
+        \midrule
+        Packets received for getting data  & N & 1 & $Nr_{fails} + 1$ \\        
+        \midrule
+        Util packets when getting data  & 1 & 1 & 1 \\
+        \midrule
+        Recall posibility when getting data & $\approx\frac{100}{2^{N}}\%$ & $75\%$ & $0\%$ \\
+        \midrule
+        Usability when getting data & $\frac{1}{N}\%$ & $100\%$ & $100\%$ \\
+        \midrule
+        Bandwidth used   & high usage & low usage & medium usage \\
+        \bottomrule
+    \end{tabular}
+\end{center}    
+

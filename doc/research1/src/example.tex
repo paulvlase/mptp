@@ -1,0 +1,43 @@
+
+
+Here is an example of how to use swift library:
+
+\textbf{Seeder example}
+\begin{itemize}
+ \item The first step is to create socket:\\\\
+\small{\emph{
+\hspace*{1cm}	Swift s = socketSwift();
+}}
+ \item The second step is to bind socket: \\\\
+\small{\emph{
+\hspace*{1cm}	SockSwiftaddr ssa = (SockSwiftaddr) calloc (1, sizeof(struct, sockSwiftaddr);\\
+\hspace*{1cm}	Ssa-$>$sin_port = 9000;\\
+\hspace*{1cm}	bindSwift(s, ssa, sizeof(*ssa));\\
+}}
+ \item The third step is to listen from socket. The difference between normal socket listen is that after listen we will
+have the request data, so we don’t need an accept step:\\\\
+\small{\emph{
+\hspace*{1cm}	SockSwiftaddr ret =  (SockSwiftaddr) calloc (1, sizeof(struct, sockSwiftaddr);\\
+\hspace*{1cm}	char * buf = (char*) calloc(MAXSIZE, ret);\\
+\hspace*{1cm}	while (1) \{\\
+\hspace*{1.7cm}	size_t len = ListenFromSocket(s, buf, MAXSIZE, 0, ret, sizeof(*ret));\\
+\hspace*{1.7cm}	sendToSwift (s, buf, len, 0, ret, sizeof(*ret));\\
+\hspace*{1cm}	\}
+}}
+\end{itemize}
+
+\textbf{Peer example}
+\begin{itemize}
+ \item The first step is to create socket :\\\\
+\small{\emph{
+\hspace*{1cm}	Swift s = socketSwift();
+}}
+ \item The second step is to make a request for receiving data:\\\\
+\small{\emph{
+\hspace*{1cm}	SockSwiftaddr from =  (SockSwiftaddr) calloc (1, sizeof(struct, sockSwiftaddr);\\
+\hspace*{1cm}	from-$>$sin_addr.N = 1;\\
+\hspace*{1cm}	from-$>$sin_addr.s_addr[0] = (192$<<$24) + (168$<<$16) + (1$<<$8) + 101\\
+\hspace*{1cm}	char * buf = (char*) calloc(MAXSIZE, ret);\\
+\hspace*{1cm}	size_t = recvFromSwift (s, buf, len, 0, from, sizeof(*from));\\
+}}
+\end{itemize}

@@ -1,0 +1,111 @@
+%\section{\fontfamily{phv}\selectfont{\large{\bfseries{IMPLEMENTATION}}}}
+
+\subsection{Motivation}
+
+Current Internet protocols are geared for 1:1 client/server communication. \emph{Swift} expands the TCP/IP protocol
+suite with swarming. It is designed to be capable of integration into browsers or operating systems and is
+able to serve 95\% of current Internet traffic.
+
+The Linux kernel is an operating system kernel used by the Linux family of Unix-like operating systems. It is one of
+the most prominent examples of free and open source software. We chose this operating system because of the freedom 
+to develop with open source rather than depending on a closed environment. This way we have direct access to the kernel
+code to modify it for our specific purpose. Another bonus is the open syntax describing all aspects regarding the
+Linux kernel internals. 
+
+We are motivated to implement the \emph{swift} protocol as part of the transport layer - at the OSI level 4, because of
+the benefits that will be gained by reducing the number of system calls made from user space into the kernel and
+the number of preemption moments.
+
+\subsection{Design Goals}
+
+We propose an integration of \emph{swift} protocol as a transport protocol in the Linux kernel networking stack to 
+ensure maximum efficiency of data transfer.
+
+Chief design goals include easy integration in the Linux kernel and minimal disruption to current \emph{swift} 
+implementation (libswift). 
+
+The idea is to implement only transport-related components in kernel space. Leave freedom of application layer 
+protocols over the \emph{swift} multiparty transport. Kernel transport layer implementation is only concerned with
+getting the “bytes going”. Peer discovery and piece information will remain implemented in user 
+space applications.
+
+Another goal is to maintain the transparency of the communication between user and kernel-space. To ensure this a 
+socket-like interface will be provided to the application designer. The user-space does not need to be aware of the
+kernel implementation. From the user perspective view how the data is transfer it is not important.
+
+\subsection{Architecture}
+
+\labelindexref{Figure}{img:arch} shows a generic view of the application and the communication between user and kernel 
+space.
+
+\image[scale=0.45]{img/AppFinal}{img:arch}{Architecture - High Level View}
+
+The \emph{swift} transport layer is a new kernel interface allowing the creation of specialized \emph{swift} sockets.
+It implements the multiparty protocol allowing piece transport to/from other hosts in a peer-to-peer fashion.
+
+There are specialized “request queues”, metadata queues, to/from user space. The receiver request queue stores the user 
+space demands acquisition of pieces of data, while the sender request queue stores the kernel space demands. These
+demands represents requests to the user space for delivery of pieces of data in name of other peers. 
+
+\emph{Swift} specialized “data queues” (receiver/sender), similar to TCP buffers, allow delivery of data to/from user 
+space. Pieces are identified through Merkle hashes.
+
+Specialized system call API allows user space applications to interact with the above mentioned queues and, thus, with 
+the multiparty transport protocol implementation.
+
+Innate differences from a classical one-to-one communication such as UDP or TCP means the system call API doesn't
+follow the classical send/receive paradigm. In order to compensate this and to provide a rather “friendly” interface to
+user space applications, a library is designed that will provide a simpler interface (SWIFT Library in the above image).
+
+Peer and piece discovery are the responsibility of the user space application. The SWIFT Library may also provide 
+wrappers over a UDP-based channel for discovery.
+
+Merkle hashes are stored and computed in user space. It is the responsibility and freedom of the application to decide 
+piece priority acquisition or treatment of other peers. 
+
+\image[scale=0.4]{img/RD}{img:rd}{Architecture - Workflow}
+
+\labelindexref{Figure}{img:rd} describes the “receive/send data” process. The request is initiated from the user space
+application, which uses the \emph{swift} library API to communicate with the kernel space. This request will be added to
+the
+specialized “request queue”. Each of these requests will generate a system call. The kernel space implementation is
+solely responsible for providing a clean multiparty transport capability allowing maximum efficiency for peer-to-peer
+like application protocols. Basically, every request will be sent to every peer application that haves the specific
+pieces requested. So it is possible to have multiple responses, but only the first one will be accepted and the others
+will be dropped. 
+
+\subsection{Challenges}
+
+The first approach we thought of was to include all the \emph{swift} protocol into the kernel space. This approach could
+not be implemented because of the restriction of the memory size in the kernel space. For the integrity check the
+\emph{swift} protocol relies on Merkle hash tree. Keeping this tree in the kernel space memory is not scalable. The
+Internet content is too large to be stored in kernel even if the tree retains only hashes of the data disseminated.
+
+After this we concluded that the kernel space implementation will only be used for multiparty transport. Other
+decisions/chores are left for the user space application. For example, the UDP channel is a control channel that will
+remain in user space and may be understood as an overlay for updating peer/piece information. All the informations
+regarding peers and data hashes are also stored in the user space.
+
+Another issue is represented by the communication between user and kernel space. There are three main lines of
+communication with the Linux kernel. The first one consist in char devices that would require creation of a specialized
+device. This approach it would go against "this is a network protocol and provides a socket-like API". The second way to
+communicate between kernel and user space is with netlink sockets. This type of sockets are non-standard, Linux-only
+sockets, and are mostly used for specialized kernel subsystems (such as routing table management). The last one is
+represented by the classical communication - using system calls. This is our choice as we plan to update the
+socket/network system call API (\texttt{sys\_socket}, \texttt{sys\_bind}, \texttt{sys\_sendmsg} etc.) with an
+implementation of multiparty socket - \emph{swift} sockets.
+
+The main challenge was how to modify the classical network system call, which was designed for peer-to-peer
+communication, to support multiparty communication. In our approach, from the user point of view, a single socket
+exist and with our library implementation he can access this socket in a classical manner. However, in reality there
+are many sockets behind. A \emph{swift} application must be able to be both sender and receiver. For this reason
+it will exist one socket that will listen for new data requests -- for the seeder part, a socket which carries the data
+that needs to be transfered and a socket on which the requested data is received.
+
+The main steps in starting up a application that uses \emph{swift} multiparty protocol are detailed in this paragraph.
+At first, regardless of what role will the application take - seeder or peer, there should be a call to the
+\texttt{socketSwift()} function. This will create the actual sockets. Next, for the seeder part of the application,
+there should be a \texttt{bindSwift()} call and a loop with the \texttt{listenFromSocket()} call, waiting for data
+requests. The seeder can respond to client request by issuing \texttt{sendToSwift()} with the appropriate informations.
+A peer, on the other hand, should call \texttt{recvFromSwift()} in a loop to receive all the necessary data
+from the seeders. 

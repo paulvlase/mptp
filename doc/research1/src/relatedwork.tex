@@ -1,0 +1,31 @@
+%\section{\fontfamily{phv}\selectfont{\large{\bfseries{PREVIOUS RELATED WORK}}}}
+
+The \emph{swift} protocol is currently implemented in user-space on top of UDP,  the thinnest wrapper over IP. It
+entirely drops TCP's abstraction of sequential reliable data stream delivery - for \emph{swift} this is redundant. For
+example, out-of-order data could still be saved and the same piece of data might always be received from another peer.
+Being implemented over UDP, the protocol does its best to make every datagram self-contained. Due to the fact that the 
+Internet is mostly used for disseminating content, the \emph{swift} aims at creating a single unified content-centric
+transport protocol serving as a bridge language of content distribution. To implement that ultimate data cloud model,
+the protocol has to unify use cases of data download, video-on-demand and live streaming. It must work in the settings
+of client-server, peer-to-peer\cite{peer-to-peer}, CDN or peer-assisted networks, effectively blending those
+architectures.
+
+
+BitTorrent is also a peer-to-peer file sharing protocol used for distributing large amounts of data \cite{bittorrent}.
+This protocol can distribute large files without large bandwidth consumption or cpu power. Rather than downloading a
+file from a single source, the BitTorrent protocol allows users to join a "swarm" of hosts to download and upload from
+each other simultaneously. Every file is divided into pieces. Just like in \emph{swift} protocol, when a hosts fully
+received a piece, it can distribute it to other hosts. This way, the task of distributing a file is supported by all who
+need that file.
+
+In BitTorrent, every piece has a cryptographic hash attached in the torrent descriptor. When an entire piece is
+received, the host recalculate the hash in order to verify the authenticity of the actual piece. The integrity of the
+data is checked in the same manner also for \emph{swift} protocol, but in this case the hash is send along with the
+useful data.  
+
+LEDBAT\cite{ledbat}, \cite{ledbat2} is an experimental delay-based congestion control algorithm. It's main goal is to
+utilize the available bandwidth on an end-to-end path while limiting the consequent increase in queueing delay on the
+path. LEDBAT uses changes in one-way delay measurements to limit congestion induced in the network by the LEDBAT flow.
+LEDBAT is designed largely for use by background bulk-transfer applications. It is designed to be no more aggressive
+than TCP congestion control and yields in the presence of competing TCP flows, thus reducing interference with the
+network performance of the competing flows. The \emph{swift} protocols relies on LEDBAT for congestion control support.
