@@ -1,0 +1,107 @@
+% vim: set tw=78 sts=2 sw=2 ts=8 aw et ai:
+\documentclass[12pt]{article}
+
+\usepackage[paper=a4paper, top=2cm, bottom=3cm, left=2.5cm, right=2.5cm]{geometry}
+
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage[english]{babel}
+\usepackage{hyperref}	  % use \url{http://$URL} or \href{http://$URL}{Name}
+\usepackage{underscore}	  % underscores need not be escaped
+\usepackage{subfigure}
+\usepackage{verbatim}
+\usepackage{float}
+\usepackage{booktabs}
+
+% Support for including graphics
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+
+\usepackage{hyperref}
+
+\hypersetup{%
+	colorlinks=true,
+	linkcolor=blue,
+	anchorcolor=black,
+	citecolor=black,
+	urlcolor=blue,
+	bookmarks=true,
+	bookmarksnumbered=true
+}
+\urlstyle{same}
+
+\newcommand{\labelindexref}[2]{\hyperref[#2]{#1~\ref*{#2}}}
+% command for inserting labeled figures
+\newcommand{\image}[4][]{
+\begin{figure}[htb]
+\begin{center}
+\includegraphics[#1]{#2}
+\caption{#4 \label{#3}}
+\end{center}
+\end{figure}
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2ex}
+
+
+\title{\bfseries{SWIFT in the Linux Kernel\\
+\large{\vspace*{0.4cm}Scientific supervisor: Nicolae Țăpuș\\ Technical supervisor: Răzvan Deaconescu}}}
+
+\author{Oana Baron, Bogdan Druțu\\
+Automatic Control and Computers Faculty\\
+University Politehnica of Bucharest\\
+Splaiul Independenței nr. 313, Bucharest, Romania \\
+\emph{\{oana.baron, bogdan.drutu\}@cti.pub.ro}}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+%\begin{abstract}
+%\input{src/abstract}
+%\end{abstract}
+
+{\bf \hspace*{0.8cm} \textbf{\emph{Keywords}}  --  bittorrent, multiparty, transport protocol, linux kernel,\\
+\hspace*{0.8cm} Merkle hash trees, binmaps}
+
+\section{Introduction}
+\label{sec:introduction}
+\input{src/intro}
+
+\section{Preliminary Work}
+\label{sec:preliminarywork}
+\input{src/preliminarywork}
+
+%\pagebreak
+
+\section{Architecture}
+\label{sec:arch}
+\input{src/arch}
+
+\section{Raw Sockets}
+\label{sec:rawsock}
+\input{src/rawsock}
+
+\section{Testing and Evaluation}
+\label{sec:testing}
+\input{src/testing}
+
+
+\section{Conclusion and Further Work}
+\label{sec:summary}
+\input{src/summary}
+
+%\section*{Acknowledgment}
+%\label{sec:acknowledgment}
+
+%The authors would like to thank XYZ for their support and dedication.
+
+\pagebreak
+
+\bibliographystyle{abbrv}
+\bibliography{my-report}
+
+\end{document}

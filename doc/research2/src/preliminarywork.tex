@@ -1,0 +1,43 @@
+While designing our system, we have tackled a few different ideas, each with its strengths and weaknesees. We present
+now some of those preliminary ideas that lead to the our current desing choice.
+
+The first approach we thought of was to include all of the swift protocol into the kernel space. This
+approach had the advantage of simplicity and would have implied minimal architectural changes. The current user space 
+implementation could have been ported to a kernel module.
+
+Though simple, this approach could not be implemented because of the restriction of memory size in the kernel.
+For the integrity check the swift protocol relies on Merkle hash tree. Keeping this tree in the kernel space memory is
+not scalable. The Internet content is too large to be stored in kernel. Even if the tree retains only hashes of the data
+disseminated, the space is insufficient.
+
+
+
+The second approach of the swift implementation is represent in the \labelindexref{Figure}{img:tree}.
+
+\image[scale=0.45]{img/tree}{img:tree}{Tree}
+
+The swift transport should have been a new kernel interface allowing the creation of specialized swift sockets. It
+should have implemented the multiparty protocol allowing piece transport to/from other hosts in a peer-to-peer fashion.
+
+That implementation should have had specialized "request queues", metadata queues, to/from user space.  Specialized
+system call API should have allowed user space applications to interact with the above
+mentioned queues and, thus, with the multiparty transport protocol implementation.
+
+Innate differences from a classical one-to-one communication such as UDP or TCP means the system call API shouldn't have
+followed the classical send/receive paradigm. In order to compensate this and to provide a rather "friendly" interface
+to user space applications, a library was designed that to provide a simpler interface. Peer and piece discovery should
+have been the responsibility of the user space application. The SWIFT Library may also provide wrappers over a UDP-based
+channel for discovery. 
+
+Merkle hashes should have stored and computed in user space. This approach couldn't be implemented because of the
+restriction of the library implementations (e.g. a users application design would be more restrictive). Moreover the
+kernel implementation should have been like an UDP which support multicast transfer.  
+
+
+The third approach of the swift implementation was to detach the transport layer from the original swift implementation
+and to manage it. When we started to implement this we found a lot of inconvenience like our code duplicate a lot of
+application code, we cannot implement the discovery protocol, and again our kernel implementation should have been like
+a multicast-UDP.
+
+This approach also couldn't be implemented because of the complexity of the transport layer management, moreover we
+didn't find strengths to confirm that our implementation could be better than original implementation.

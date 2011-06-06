@@ -1,0 +1,21 @@
+%\section{\fontfamily{phv}\selectfont{\large{\bfseries{SUMMARY}}}}
+
+The \emph{swift} protocol is a multiparty content-centric protocol that aims to disseminate content among a swarm of
+peers. This paper proposes an approach for the optimization of the currently \emph{swift} protocol. The integration of
+the communication in the kernel space as a multiparty transport protocol that is solely responsible for getting the
+bits moving improves the over all protocol performance. It ensures maximum efficiency of data transfer by decreasing
+switches between user and kernel space and eliminating some performance penalties due to context switches.
+
+\subsection*{Directions for Future Work}
+
+
+After we complete the implementation and the functional tests, we want to test extensively our new features in a real
+environment. We plan to do stress tests using a cluster. This tests will help us to make an overview about our
+implementation and we could compare with the user-space implementation of the \emph{swift} to determine exactly what
+performance we encountered. If the results are satisfactory, we will continue to optimize our program and we will add
+new features.
+
+It will be very useful to have a real application on top of the \emph{swift} protocol. If not, one solution would be to
+port an application strictly for this task. This would give us the opportunity to extend and refine our implementation,
+and also to extend the library API.
+

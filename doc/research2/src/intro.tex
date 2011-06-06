@@ -1,0 +1,35 @@
+%\section{\fontfamily{phv}\selectfont{\large{\bfseries{INTRODUCTION}}}}
+
+The \emph{swift} protocol is a generic multiparty transport protocol. Its mission is to disseminate content among a 
+swarm of peers. Basically, it answers one and only one request: \emph{'Here is a hash! Give me data for it!'}. Such
+entities as storage, servers and connections are abstracted and are virtually invisible at the API layer. Given a hash,
+the data is received from whatever source available and data integrity is checked cryptographically with Merkle hash
+trees.
+
+If you need some data it is somewhat faster and/or cheaper downloading it from a nearby well-provisioned replica, but 
+on the other hand, this process requires that multiple parties (e.g. consumers, the data sources, CDN
+sites\cite{cdnwiki} , mirrors, peers) have to be coordinate. As the Internet content  is in a continuous increasing
+nowadays, the overhead of peer/replica coordination becomes higher then the mass of the download itself. Thus, the niche
+for multiparty transfers expands. Still, current, relevant technologies are tightly coupled to a single use case or even
+infrastructure of a particular corporation. These are the reasons of the \emph{swift} protocol appearance with its
+primary goal to act as a generic content-centric multiparty transport protocol that allows seamless, effortless data
+dissemination on the big cloud represented by the Internet.
+
+// TODO - swift description paragraph
+
+\textbf{Contribution}. // TODO
+
+\begin{comment}
+Our main objective is to integrate \emph{swift} as a transport protocol in the Linux kernel
+networking stack. This will provide notable performance improvement regarding data transfer. We intend to do this with
+minimal intrusion effect in the Linux kernel and also to change as little as possible the current \emph{swift}
+implementation. Another goal is to provide a transparent API between the kernel and the user space. A developer will use
+a socket-like interface when building an application on top of the \emph{swift} protocol.
+\end{comment}
+
+\textbf{Outline}. The rest of the paper is organized as follows. In section \ref{sec:preliminarywork} we discuss some
+previous approaches in designing the system with their sthrengths and weaknesess. In section \ref{sec:arch}
+ presents our current approach to integrate the \emph{swift} protocol as a transport layer protocol into the Linux
+kernel. Section \ref{sec:rawsock} presents a preliminary implementation using raw socktes that prepares the ground for
+the final stage of the project.  We describe our testing scenariou in detail in section \ref{sec:testing}. Section
+\ref{sec:summary} concludes the article and refers to future work.
