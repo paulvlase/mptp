@@ -10,13 +10,10 @@ For the integrity check the swift protocol relies on Merkle hash tree. Keeping t
 not scalable. The Internet content is too large to be stored in kernel. Even if the tree retains only hashes of the data
 disseminated, the space is insufficient.
 
+\image[scale=0.4]{img/arch1.pdf}{img:arch1}{Previous Architecture}
 
-
-The second approach of the swift implementation is represent in the \labelindexref{Figure}{img:tree}.
-
-\image[scale=0.45]{img/tree}{img:tree}{Tree}
-
-The swift transport should have been a new kernel interface allowing the creation of specialized swift sockets. It
+The second approach of the swift implementation is represent in the \labelindexref{Figure}{img:arch1}. The swift transport 
+  should have been a new kernel interface allowing the creation of specialized swift sockets. It
 should have implemented the multiparty protocol allowing piece transport to/from other hosts in a peer-to-peer fashion.
 
 That implementation should have had specialized "request queues", metadata queues, to/from user space.  Specialized

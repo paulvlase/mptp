@@ -15,17 +15,44 @@ infrastructure of a particular corporation. These are the reasons of the \emph{s
 primary goal to act as a generic content-centric multiparty transport protocol that allows seamless, effortless data
 dissemination on the big cloud represented by the Internet.
 
-// TODO - swift description paragraph
+\subsection{Swift Description}
 
-\textbf{Contribution}. // TODO
+Most features of the \emph{swift} protocol are defined by its function as a content-centric multiparty transport 
+protocol. A significant difference between \emph{swift} and the TCP protocol is that TCP possesses no information
+regarding what data it is dealing with, as the data is passed from the user-space, while the \emph{swift} protocol has
+data fixed in advance and many peers participate in distributing the same data. Because of this and the fact that for
+\emph{swift} the order of delivery is of little importance and unreliability is naturally compensated for by redundancy,
+it entirely drops TCP's abstraction of sequential reliable data stream delivery. For example, out-of-order data could
+still be saved and the same piece of data might always be received from another peer.
 
-\begin{comment}
-Our main objective is to integrate \emph{swift} as a transport protocol in the Linux kernel
-networking stack. This will provide notable performance improvement regarding data transfer. We intend to do this with
-minimal intrusion effect in the Linux kernel and also to change as little as possible the current \emph{swift}
-implementation. Another goal is to provide a transparent API between the kernel and the user space. A developer will use
-a socket-like interface when building an application on top of the \emph{swift} protocol.
-\end{comment}
+Being implemented over UDP, the protocol does its best to make every datagram self-contained so each datagram could be 
+processed separately and a loss of one datagram must not disrupt the flow. Thus, a datagram carries zero or more
+messages, and neither messages nor message interdependencies should span over multiple datagrams. 
+
+The verification of data pieces is realize using Merkle hash trees\cite{merkle}, \cite{merkle-ext}. That means that all
+hashes necessary for verifying data integrity needs to be put into the same datagram as the data. For both use cases,
+streaming and downloading, an unified  integrity checking scheme that works down to the level of a single datagram is
+developed. As a general rule, the sender should append to the data some meta-data represented by the necessary hashes
+for the data verification. While some optimistic optimizations are definitely possible, the receiver should drop data if
+it is impossible to verify it. Before sending a packet of data to the receiver, the sender inspects the receiver's
+previous acknowledgments to derive which hashes the receiver already has for sure. 
+
+The data is acknowledged in terms of binary intervals, with the base interval of 1KB "packet". As a result, every 
+single packet is acknowledged logarithmic number of times. This mechanism provides some necessary redundancy of the
+acknowledgements and sufficiently compensates the unreliability of the datagrams. 
+
+The only function of TCP that is also critical for \emph{swift} is the congestion control. To facilitate delay-based 
+congestion control an acknowledgment contains besides the dimension of the file received from its addressee a timestamp.
+
+
+\textbf{Contribution}. Our main objective is to integrate \emph{swift} as a transport protocol in the Linux kernel 
+networking stack. This will provide notable performance improvement regarding data transfer. We intend to do this with 
+minimal intrusion effect in the Linux kernel and also to change as little as possible the current \emph{swift} 
+implementation. Another goal is to provide a transparent API between the kernel and the user space. A developer will use 
+a socket-like interface when building an application on top of the \emph{swift} protocol. In order to achieve this goal
+we have implemented an intermediary step. We have simulated the kernel part in the user-space using raw sockets. This 
+has the advantage of providing means to have modular functionality tests.
+
 
 \textbf{Outline}. The rest of the paper is organized as follows. In section \ref{sec:preliminarywork} we discuss some
 previous approaches in designing the system with their sthrengths and weaknesess. In section \ref{sec:arch}
