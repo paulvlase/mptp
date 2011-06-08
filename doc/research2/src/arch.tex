@@ -39,4 +39,18 @@ over only one socket.
 
 \image[scale=0.55]{img/recvdata.png}{img:recvdata}{Leecher}
 
+\labelindexref{Figure}{img:recvdata} presents the conceptual model of the Leecher. The Leecher is the one that wants
+to receive a data. In order to do this it must connect to the multiparty protocol by creating and binding to a
+multiparty socket. When it binds to a socket, it uses the hash as a parameter to find a connection with a peer that
+has the respective file. This discovery is done the peer discovery overlay. The Leecher then waits for packets
+from the seeders.
+ 
+
 \image[scale=0.55]{img/sendmsg.png}{img:sendmsg}{Seeder}
+
+
+\labelindexref{Figure}{img:sendmsg} presents the conceptual model of the Seeder. The Seeder is the one that serves
+data to other Leechers. In order to do this it must connect to the multiparty protocol by creating, binding and
+listening to a mutliparty socket. When binding the Seeder practically uses the hash as a parameter. This means that
+for every file hashed there will be a socket on which the seeder can receive and serve requests. The Seeder then waits
+for requests and sends data packets as requested.
