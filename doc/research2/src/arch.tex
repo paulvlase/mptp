@@ -28,6 +28,20 @@ through custom made system calls with the wrapper library. This two phases are d
 
 \image[scale=0.5]{img/kernel.png}{img:kernel}{Detail architecture}
 
+% RAW sockets
+A socket is one of the most fundamental technologies of computer networking.
+Sockets allow applications to communicate using standard mechanisms built into
+network hardware and operating systems.
+
+Raw mode is basically there to allow you to bypass some of the way that your
+computer handles TCP/IP. Rather than going through the normal layers of
+encapsulation/decapsulation that the TCP/IP stack on the kernel does, you just
+pass the packet to the application that needs it. No TCP/IP processing -- so
+it's not a processed packet, it's a raw packet. The application that's using
+the packet is now responsible for stripping off the headers, analyzing the
+packet, all the stuff that the TCP/IP stack in the kernel normally does for
+you.
+
 Raw socket implementation will support all syscalls and it will be a copy of our kernel implementation. 
 This implementation will have the same API and behavior as the kernel implementation. Still, in the first
 implementation, a swift socket will be available to act as only a seeder or a leecher, explicitly one operation transmit
@@ -54,3 +68,7 @@ data to other Leechers. In order to do this it must connect to the multiparty pr
 listening to a mutliparty socket. When binding the Seeder practically uses the hash as a parameter. This means that
 for every file hashed there will be a socket on which the seeder can receive and serve requests. The Seeder then waits
 for requests and sends data packets as requested.
+
+
+
+
