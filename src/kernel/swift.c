@@ -197,130 +197,145 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 {
 	int err;
 	uint8_t dport;
-	__be32 daddr;
-	uint8_t sport;
-	struct sk_buff * skb;
-	struct sock * sk; 
-	struct inet_sock * isk;
-	struct swift_sock * ssk;
-	struct swifthdr * shdr;
-	int connected = 0;
-	int totlen;
-	struct rtable * rt = NULL;
-	
-	if (unlikely(sock == NULL)) {
-		log_error("Sock is NULL\n");
-		err = -EINVAL;
-		goto out;
-	}
-	sk = sock->sk;
+    __be32 daddr;
+    uint8_t sport;
+    struct sk_buff * skb;
+    struct sock * sk; 
+    struct inet_sock * isk;
+    struct swift_sock * ssk;
+    struct swifthdr * shdr;
+    int connected = 0;
+    int totlen;
+    struct rtable * rt = NULL;
+    int dests = 0;
+    int i;
+    struct sockaddr_swift * swift_addr = NULL;
 
-	if (unlikely(sk == NULL)) {
-		log_error("Sock->sk is NULL\n");
-		err = -EINVAL;
-		goto out;
-	}
+    if (unlikely(sock == NULL)) {
+        log_error("Sock is NULL\n");
+        err = -EINVAL;
+        goto out;
+    }
+    sk = sock->sk;
 
-	isk = inet_sk(sk);
-	ssk = swift_sk(sk);
+    if (unlikely(sk == NULL)) {
+        log_error("Sock->sk is NULL\n");
+        err = -EINVAL;
+        goto out;
+    }
 
-	sport = ssk->src;
-	if (sport == 0) {
-		sport = get_next_free_port();
-		if (unlikely(sport == 0)) {
-			log_error("No free ports\n");
-			err = -ENOMEM;
-			goto out;
-		}
-	}
+    isk = inet_sk(sk);
+    ssk = swift_sk(sk);
 
-	if (msg->msg_name) {
-		struct sockaddr_swift * swift_addr = (struct sockaddr_swift *) msg->msg_name;
-		
+    sport = ssk->src;
+    if (sport == 0) {
+        sport = get_next_free_port();
+        if (unlikely(sport == 0)) {
+            log_error("No free ports\n");
+            err = -ENOMEM;
+            goto out;
+        }
+    }
+
+    if (msg->msg_name) {
+        swift_addr = (struct sockaddr_swift *) msg->msg_name;
+
         if (unlikely(msg->msg_namelen < sizeof(*swift_addr) || 
                      msg->msg_namelen < swift_addr->count * sizeof(struct swift_dest) || 
                      swift_addr->count <= 0)) {
-			log_error("Invalid size for msg_name\n");
-			err = -EINVAL;
-			goto out;
-		}
-		
-		dport = swift_addr->dests[0].port;
-		if (unlikely(dport == 0 || dport >= MAX_SWIFT_PORT)) {
-			log_error("Invalid value for destination port(%u)\n", dport);
-			err = -EINVAL;
-			goto out;
-		}	
+            log_error("Invalid size for msg_name\n");
+            err = -EINVAL;
+            goto out;
+        }
 
-		daddr = swift_addr->dests[0].addr;
-		log_debug("Received from user space destination port=%u and address=%u\n", dport, daddr);
-	} else {
-		if (unlikely(!ssk->dst || !isk->inet_daddr)) {
-			log_error("No destination port/address\n");
-			err = -EDESTADDRREQ;
-			goto out;
-		}
-		dport = ssk->dst;
-		daddr = isk->inet_daddr;
+        dests = swift_addr->count;
+    } else {
+        BUG();
+        if (unlikely(!ssk->dst || !isk->inet_daddr)) {
+            log_error("No destination port/address\n");
+            err = -EDESTADDRREQ;
+            goto out;
+        }
+        dport = ssk->dst;
+        daddr = isk->inet_daddr;
 
-		log_debug("Got from socket destination port=%u and address=%u\n", dport, daddr);
-		connected = 1;
-	}
+        log_debug("Got from socket destination port=%u and address=%u\n", dport, daddr);
+        connected = 1;
+    }
 
-	totlen = len + sizeof(struct swifthdr) + sizeof(struct iphdr);
-	skb = sock_alloc_send_skb(sk, totlen, msg->msg_flags & MSG_DONTWAIT, &err);
-	if (unlikely(!skb)) {
-		log_error("sock_alloc_send_skb failed\n");
-		goto out;
-	}
-	log_debug("Allocated %u bytes for skb (payload size=%u)\n", totlen, len);
+    if (msg->msg_iovlen < dests)
+        dests = msg->msg_iovlen;
 
-	skb_reset_network_header(skb);
-	skb_reserve(skb, sizeof(struct iphdr));
-	log_debug("Reseted network header\n");
-	skb_reset_transport_header(skb);
-	skb_put(skb, sizeof(struct swifthdr));
-	log_debug("Reseted transport header\n");
+    for (i = 0; i < dests; i++) {
+        struct swift_dest *dest = &swift_addr->dests[i];
+        struct iovec *iov = &msg->msg_iov[i];
 
-	shdr = (struct swifthdr *) skb_transport_header(skb);
-	shdr->dst = dport;
-	shdr->src = sport;
-	shdr->len = ntohs(len + sizeof(struct swifthdr));
+        dport = dest->port;
+        if (unlikely(dport == 0 || dport >= MAX_SWIFT_PORT)) {
+            log_error("Invalid value for destination port(%u)\n", dport);
+            err = -EINVAL;
+            goto out;
+        }	
 
-	log_debug("payload=%p\n", skb_put(skb, len));
+        daddr = dest->addr;
+        log_debug("Received from user space destination port=%u and address=%u\n", dport, daddr);
 
-	err = skb_copy_datagram_from_iovec(skb, sizeof(struct swifthdr), msg->msg_iov, 0, len);
-	if (unlikely(err)) {
-		log_error("skb_copy_datagram_from_iovec failed\n");
-		goto out_free;
-	}
-	log_debug("Copied %u bytes into the skb\n", len);
+        len = iov->iov_len;
+        totlen = len + sizeof(struct swifthdr) + sizeof(struct iphdr);
+        skb = sock_alloc_send_skb(sk, totlen, msg->msg_flags & MSG_DONTWAIT, &err);
+        if (unlikely(!skb)) {
+            log_error("sock_alloc_send_skb failed\n");
+            goto out;
+        }
+        log_debug("Allocated %u bytes for skb (payload size=%u)\n", totlen, len);
 
-	if (connected)
-		rt = (struct rtable *) __sk_dst_check(sk, 0);
+        skb_reset_network_header(skb);
+        skb_reserve(skb, sizeof(struct iphdr));
+        log_debug("Reseted network header\n");
+        skb_reset_transport_header(skb);
+        skb_put(skb, sizeof(struct swifthdr));
+        log_debug("Reseted transport header\n");
 
-	if (rt == NULL) {
-		struct flowi fl = { .fl4_dst = daddr,
-				    .proto = sk->sk_protocol,
-				    .flags = inet_sk_flowi_flags(sk),
-				  };
-		err = ip_route_output_flow(sock_net(sk), &rt, &fl, sk, 0);
-		if (unlikely(err)) {
-			log_error("Route lookup failed\n");
-			goto out_free;
-		}
+        shdr = (struct swifthdr *) skb_transport_header(skb);
+        shdr->dst = dport;
+        shdr->src = sport;
+        shdr->len = ntohs(len + sizeof(struct swifthdr));
+
+        log_debug("payload=%p\n", skb_put(skb, len));
+
+        err = skb_copy_datagram_from_iovec(skb, sizeof(struct swifthdr), iov, 0, len);
+        if (unlikely(err)) {
+            log_error("skb_copy_datagram_from_iovec failed\n");
+            goto out_free;
+        }
+        log_debug("Copied %u bytes into the skb\n", len);
+
+        if (connected)
+            rt = (struct rtable *) __sk_dst_check(sk, 0);
+
+        if (rt == NULL) {
+            struct flowi fl = { .fl4_dst = daddr,
+                .proto = sk->sk_protocol,
+                .flags = inet_sk_flowi_flags(sk),
+            };
+            err = ip_route_output_flow(sock_net(sk), &rt, &fl, sk, 0);
+            if (unlikely(err)) {
+                log_error("Route lookup failed\n");
+                goto out_free;
+            }
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
-		sk_dst_set(sk, dst_clone(&rt->u.dst));
+            sk_dst_set(sk, dst_clone(&rt->u.dst));
 #else
-		sk_dst_set(sk, dst_clone(&rt->dst));
+            sk_dst_set(sk, dst_clone(&rt->dst));
 #endif
-	}
-	
-	err = ip_queue_xmit(skb);
-	if (likely(!err))
-		log_debug("Sent %u bytes on wire\n", len);
-	else
-		log_error("ip_queue_xmit failed\n");
+        }
+
+        err = ip_queue_xmit(skb);
+        if (likely(!err))
+            log_debug("Sent %u bytes on wire\n", len);
+        else
+            log_error("ip_queue_xmit failed\n");
+    }
 
 	return err;
 

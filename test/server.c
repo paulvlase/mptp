@@ -11,6 +11,11 @@ int main(int argc, const char *argv[])
 {
     int sock;
 
+    if (argc != 2) {
+        fprintf(stderr, "USAGE: %s listening_port\n", argv[0]);
+        return -1;
+    }
+
     sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
     if (sock < 0) {
         perror("Failed to create socket");
@@ -23,7 +28,7 @@ int main(int argc, const char *argv[])
 
     saddr->count = 1;
     saddr->dests[0].addr = 0x0100007F;
-    saddr->dests[0].port = 100;
+    saddr->dests[0].port = atoi(argv[1]);
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
         perror("Failed to bind socket");

@@ -32,25 +32,31 @@ int main(int argc, const char *argv[])
     }
 
     char buf[] = "Buffer de test";
-    struct iovec iov[1];
+    char buf2[] = "Buffer2";
+    struct iovec iov[2];
     struct msghdr msg;
-    struct sockaddr_swift *to = malloc(size);
+    int size2 = sizeof(struct sockaddr_swift) + 2 * sizeof(struct swift_dest);
+    struct sockaddr_swift *to = malloc(size2);
 
     memset(&msg, 0, sizeof(msg));
     memset(&iov, 0, sizeof(iov));
-    memset(to, 0, size);
+    memset(to, 0, size2);
 
     iov[0].iov_base = buf;
     iov[0].iov_len = sizeof(buf);
+    iov[1].iov_base = buf2;
+    iov[1].iov_len = sizeof(buf2);
 
-    to->count = 1;
+    to->count = 2;
     to->dests[0].addr = 0x0100007F;
     to->dests[0].port = 100;
+    to->dests[1].addr = 0x0100007F;
+    to->dests[1].port = 101;
 
     msg.msg_iov = iov;
-    msg.msg_iovlen = 1;
+    msg.msg_iovlen = 2;
     msg.msg_name = to;
-    msg.msg_namelen = size;
+    msg.msg_namelen = size2;
 
     int ret;
 
