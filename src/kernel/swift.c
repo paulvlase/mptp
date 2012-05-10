@@ -95,13 +95,7 @@ static int swift_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 
 	swift_addr = (struct sockaddr_swift *) addr;
 
-	if (unlikely(swift_addr->sin_family != AF_INET)) {
-		log_error("Invalid family for sockaddr\n");
-		err = -EINVAL;
-		goto out;
-	}
-
-	port = ntohs(swift_addr->sin_port);
+	port = swift_addr->dests[0].port;
 
 	if (unlikely(port == 0 || port >= MAX_SWIFT_PORT)) {
 		log_error("Invalid value for sockaddr port (%u)\n", port);
@@ -162,19 +156,21 @@ static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_le
 	if (likely(addr)) {
 		struct sockaddr_swift * swift_addr = (struct sockaddr_swift *) addr;
 		
-		if (unlikely(addr_len < sizeof(*swift_addr) || swift_addr->sin_family != AF_INET)) {
+        if (unlikely(addr_len < sizeof(*swift_addr) || 
+                     addr_len < swift_addr->count * sizeof(struct swift_dest) || 
+                     swift_addr->count <= 0)) {
 			log_error("Invalid size or address family\n");
 			err = -EINVAL;
 			goto out;
 		}
-		ssk->dst = ntohs(swift_addr->sin_port);
+		ssk->dst = swift_addr->dests[0].port;
 		if (unlikely(ssk->dst == 0 || ssk->dst >= MAX_SWIFT_PORT)) {
 			log_error("Invalid value for destination port(%u)\n", ssk->dst);
 			err = -EINVAL;
 			goto out;
 		}	
 	
-		isk->inet_daddr = swift_addr->sin_addr.s_addr;
+		isk->inet_daddr = swift_addr->dests[0].addr;
 		log_debug("Received from user space destination port=%u and address=%u\n", ssk->dst, isk->inet_daddr);
 	} else {
 		log_error("Invalid swift_addr (NULL)\n");
@@ -241,20 +237,22 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	if (msg->msg_name) {
 		struct sockaddr_swift * swift_addr = (struct sockaddr_swift *) msg->msg_name;
 		
-		if (unlikely(msg->msg_namelen < sizeof(*swift_addr) || swift_addr->sin_family != AF_INET)) {
-			log_error("Invalid size or address family\n");
+        if (unlikely(msg->msg_namelen < sizeof(*swift_addr) || 
+                     msg->msg_namelen < swift_addr->count * sizeof(struct swift_dest) || 
+                     swift_addr->count <= 0)) {
+			log_error("Invalid size for msg_name\n");
 			err = -EINVAL;
 			goto out;
 		}
 		
-		dport = ntohs(swift_addr->sin_port);
+		dport = swift_addr->dests[0].port;
 		if (unlikely(dport == 0 || dport >= MAX_SWIFT_PORT)) {
 			log_error("Invalid value for destination port(%u)\n", dport);
 			err = -EINVAL;
 			goto out;
 		}	
 
-		daddr = swift_addr->sin_addr.s_addr;
+		daddr = swift_addr->dests[0].addr;
 		log_debug("Received from user space destination port=%u and address=%u\n", dport, daddr);
 	} else {
 		if (unlikely(!ssk->dst || !isk->inet_daddr)) {
@@ -285,8 +283,8 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	log_debug("Reseted transport header\n");
 
 	shdr = (struct swifthdr *) skb_transport_header(skb);
-	shdr->dst = ntohs(dport);
-	shdr->src = ntohs(sport);
+	shdr->dst = dport;
+	shdr->src = sport;
 	shdr->len = ntohs(len + sizeof(struct swifthdr));
 
 	log_debug("payload=%p\n", skb_put(skb, len));
@@ -339,6 +337,8 @@ static int swift_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	struct sockaddr_swift *swift_addr;
 	struct sock * sk = sock->sk;
 	int err, copied;
+
+    log_debug("Trying to receive sock=%p sk=%p flags=%d\n", sock, sk, flags);
 
 	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err);
 	if (unlikely(!skb)) {
@@ -404,8 +404,8 @@ static int swift_rcv(struct sk_buff *skb)
 		goto drop;
 	}
 	
-	src = ntohs(shdr->src);
-	dst = ntohs(shdr->dst);
+	src = shdr->src;
+	dst = shdr->dst;
 	if (unlikely(src == 0 || dst == 0 || src >= MAX_SWIFT_PORT || dst >= MAX_SWIFT_PORT)) {
 		log_error("Malformed packet (src=%u, dst=%u)\n", shdr->src, shdr->dst);
 		goto drop;
@@ -427,11 +427,10 @@ static int swift_rcv(struct sk_buff *skb)
 	BUILD_BUG_ON(sizeof(struct sockaddr_swift) > sizeof(skb->cb));
 	
 	swift_addr = (struct sockaddr_swift *) skb->cb;
-	swift_addr->sin_family = AF_INET;
-	swift_addr->sin_port = shdr->src;
-	swift_addr->sin_addr.s_addr = ip_hdr(skb)->saddr;
+	swift_addr->dests[0].port = shdr->src;
+	swift_addr->dests[0].addr = ip_hdr(skb)->saddr;
 
-	log_debug("Setting sin_port=%u, sin_addr=%u\n", ntohs(shdr->src), swift_addr->sin_addr.s_addr);
+	log_debug("Setting sin_port=%u, sin_addr=%u\n", ntohs(shdr->src), swift_addr->dests[0].addr);
 
 	err = ip_queue_rcv_skb((struct sock *) &ssk->sock, skb);
 	if (unlikely(err)) {
