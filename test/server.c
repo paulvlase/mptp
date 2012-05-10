@@ -1,4 +1,4 @@
-#include "../src/kernel/swift.h"
+#include "../src/kernel/mptp.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -20,19 +20,19 @@ int main(int argc, const char *argv[])
         return -1;
     }
 
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
+    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_MPTP);
     if (sock < 0) {
         perror("Failed to create socket");
         return -1;
     }
 
-    int size = sizeof(struct sockaddr_swift) + sizeof(struct swift_dest);
-    struct sockaddr_swift *saddr = malloc(size);
+    int size = sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest);
+    struct sockaddr_mptp *saddr = malloc(size);
     memset(saddr, 0, size);
 
     saddr->count = 1;
-    saddr->dests[0].addr = 0x0100007F;
-    saddr->dests[0].port = atoi(argv[1]);
+    inet_aton(ADDR, &(saddr->dests[0].addr));
+    saddr->dests[0].port = htons(atoi(argv[1]));
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
         perror("Failed to bind socket");
@@ -43,8 +43,8 @@ int main(int argc, const char *argv[])
     char buf[NUM_BUF][10240];
     struct iovec iov[NUM_BUF];
     struct msghdr msg;
-	size += (NUM_BUF - 1) * sizeof(struct swift_dest);
-    struct sockaddr_swift *from = malloc(size);
+	size += (NUM_BUF - 1) * sizeof(struct mptp_dest);
+    struct sockaddr_mptp *from = malloc(size);
 
     memset(&msg, 0, sizeof(msg));
     memset(&iov, 0, sizeof(iov));

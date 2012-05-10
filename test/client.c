@@ -1,4 +1,4 @@
-#include "../src/kernel/swift.h"
+#include "../src/kernel/mptp.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -8,14 +8,14 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define ADDR 0x8082A8C0
-#define DADDR 0x8082A8C0
+#define ADDR 0x8182A8C0
+#define DADDR 0x8182A8C0
 
 int gen_port()
 {
 	int ret;
 	srand(time(NULL));
-	ret = (rand() % 255) + 1;
+	ret = (rand() % 65536) + 1;
 	if (ret == 100 || ret == 101)
 		ret *= 2;
 	printf("Generated source port %d\n", ret);
@@ -26,19 +26,19 @@ int main(int argc, const char *argv[])
 {
     int sock;
 
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
+    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_MPTP);
     if (sock < 0) {
         perror("Failed to create socket");
         return -1;
     }
 
-    int size = sizeof(struct sockaddr_swift) + sizeof(struct swift_dest);
-    struct sockaddr_swift *saddr = malloc(size);
+    int size = sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest);
+    struct sockaddr_mptp *saddr = malloc(size);
     memset(saddr, 0, size);
 
     saddr->count = 1;
-    saddr->dests[0].addr = ADDR;
-    saddr->dests[0].port = gen_port();
+    inet_aton(ADDR, &(saddr->dests[0].addr));
+    saddr->dests[0].port = htons(gen_port());
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
         perror("Failed to bind socket");
@@ -50,8 +50,8 @@ int main(int argc, const char *argv[])
     char buf2[] = "Buffer2";
     struct iovec iov[2];
     struct msghdr msg;
-    int size2 = sizeof(struct sockaddr_swift) + 2 * sizeof(struct swift_dest);
-    struct sockaddr_swift *to = malloc(size2);
+    int size2 = sizeof(struct sockaddr_mptp) + 2 * sizeof(struct mptp_dest);
+    struct sockaddr_mptp *to = malloc(size2);
 
     memset(&msg, 0, sizeof(msg));
     memset(&iov, 0, sizeof(iov));
@@ -63,10 +63,10 @@ int main(int argc, const char *argv[])
     iov[1].iov_len = sizeof(buf2);
 
     to->count = 2;
-    to->dests[0].addr = 0x0100007F;
-    to->dests[0].port = 100;
-    to->dests[1].addr = 0x0100007F;
-    to->dests[1].port = 101;
+    inet_aton(DADDR, &(to->dests[0].addr));
+    to->dests[0].port = htons(100);
+    inet_aton(DADDR, &(to->dests[1].addr));
+    to->dests[1].port = htons(101);
 
     msg.msg_iov = iov;
     msg.msg_iovlen = 2;
