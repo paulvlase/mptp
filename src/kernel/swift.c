@@ -110,6 +110,7 @@ static int swift_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 	}
 
 	ssk = swift_sk(sock->sk);
+    sock->sk->sk_rcvbuf = 10 * 1024 * 1024;
 	ssk->src = port;
 
 	swift_hash(port, ssk);
@@ -269,6 +270,7 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
     for (i = 0; i < dests; i++) {
         struct swift_dest *dest = &swift_addr->dests[i];
         struct iovec *iov = &msg->msg_iov[i];
+        char *payload;
 
         dport = dest->port;
         if (unlikely(dport == 0 || dport >= MAX_SWIFT_PORT)) {
@@ -301,7 +303,8 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
         shdr->src = sport;
         shdr->len = ntohs(len + sizeof(struct swifthdr));
 
-        log_debug("payload=%p\n", skb_put(skb, len));
+        payload = skb_put(skb, len);
+        log_debug("payload=%p\n", payload);
 
         err = skb_copy_datagram_from_iovec(skb, sizeof(struct swifthdr), iov, 0, len);
         if (unlikely(err)) {
