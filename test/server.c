@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
+#define ADDR 0x80BEA8C0
+
 int main(int argc, const char *argv[])
 {
     int sock;
@@ -27,7 +29,7 @@ int main(int argc, const char *argv[])
     memset(saddr, 0, size);
 
     saddr->count = 1;
-    saddr->dests[0].addr = 0x0100007F;
+    saddr->dests[0].addr = ADDR;
     saddr->dests[0].port = atoi(argv[1]);
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
@@ -36,7 +38,7 @@ int main(int argc, const char *argv[])
         return -1;
     }
 
-    char buf[256];
+    char buf[10240];
     struct iovec iov[1];
     struct msghdr msg;
     struct sockaddr_swift *from = malloc(size);

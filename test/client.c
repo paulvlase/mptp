@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
+#define ADDR 0x80BEA8C0
+
 int main(int argc, const char *argv[])
 {
     int sock;
@@ -22,7 +24,7 @@ int main(int argc, const char *argv[])
     memset(saddr, 0, size);
 
     saddr->count = 1;
-    saddr->dests[0].addr = 0x0100007F;
+    saddr->dests[0].addr = ADDR;
     saddr->dests[0].port = 50;
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
@@ -31,7 +33,7 @@ int main(int argc, const char *argv[])
         return -1;
     }
 
-    char buf[] = "Buffer de test";
+    char buf[] = "Buffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de test";
     char buf2[] = "Buffer2";
     struct iovec iov[2];
     struct msghdr msg;
@@ -48,9 +50,9 @@ int main(int argc, const char *argv[])
     iov[1].iov_len = sizeof(buf2);
 
     to->count = 2;
-    to->dests[0].addr = 0x0100007F;
+    to->dests[0].addr = ADDR;
     to->dests[0].port = 100;
-    to->dests[1].addr = 0x0100007F;
+    to->dests[1].addr = ADDR;
     to->dests[1].port = 101;
 
     msg.msg_iov = iov;
