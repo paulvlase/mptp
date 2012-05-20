@@ -330,6 +330,7 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 #endif
         }
 
+        skb->local_df = 1;
         err = ip_queue_xmit(skb);
         if (likely(!err))
             log_debug("Sent %u bytes on wire\n", len);
@@ -449,7 +450,7 @@ static int swift_rcv(struct sk_buff *skb)
 
 	err = ip_queue_rcv_skb((struct sock *) &ssk->sock, skb);
 	if (unlikely(err)) {
-		log_error("ip_queu_rcv_skb\n");
+		log_error("ip_queue_rcv_skb failed with %d\n", err);
 		consume_skb(skb);
 	}
 	return NET_RX_SUCCESS;
