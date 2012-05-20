@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
-#define ADDR 0x80BEA8C0
+#define ADDR 0x81BEA8C0
 
 int main(int argc, const char *argv[])
 {
@@ -39,7 +39,7 @@ int main(int argc, const char *argv[])
         return -1;
     }
 
-    int fd = open(argv[2], O_RDWR);
+    int fd = open(argv[2], O_RDWR | O_CREAT | O_TRUNC);
     if (fd < 0) {
         perror("Failed to open file");
         close(sock);
