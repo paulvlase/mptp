@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #define ADDR 0x80BEA8C0
+#define DADDR 0x81BEA8C0
 
 int main(int argc, const char *argv[])
 {
@@ -50,9 +51,9 @@ int main(int argc, const char *argv[])
     iov[1].iov_len = sizeof(buf2);
 
     to->count = 2;
-    to->dests[0].addr = ADDR;
+    to->dests[0].addr = DADDR;
     to->dests[0].port = 100;
-    to->dests[1].addr = ADDR;
+    to->dests[1].addr = DADDR;
     to->dests[1].port = 101;
 
     msg.msg_iov = iov;
