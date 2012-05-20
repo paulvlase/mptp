@@ -3,7 +3,7 @@
 
 #define log_error(...) printk(KERN_ERR "SWIF-ERROR : " __VA_ARGS__)
 
-#if 1
+#if 0
 
 #define log_debug(...) printk(KERN_DEBUG "SWIF-DEBUG : " __VA_ARGS__)
 
