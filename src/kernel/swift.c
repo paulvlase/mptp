@@ -356,6 +356,8 @@ static int swift_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	struct sockaddr_swift *swift_addr;
 	struct sock * sk = sock->sk;
 	int err, copied;
+	int i;
+	struct sockaddr_swift *ret_addr = (struct sockaddr_swift *) msg->msg_name;
 
     log_debug("Trying to receive sock=%p sk=%p flags=%d\n", sock, sk, flags);
 
@@ -365,32 +367,43 @@ static int swift_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 		goto out;
 	}
 
-	log_debug("Received skb %p\n", skb);
+	for (i = 0; i < msg->msg_iovlen; i++) {
+		log_debug("Received skb %p\n", skb);
 
-	swift_addr = (struct sockaddr_swift *) skb->cb;
-	msg->msg_namelen = sizeof(struct sockaddr_swift);
+		swift_addr = (struct sockaddr_swift *) skb->cb;
 
-	copied = skb->len;
-	if (copied > len) {
-		copied = len;
-		msg->msg_flags |= MSG_TRUNC;
-	}
+		copied = skb->len;
+		if (copied > msg->msg_iov[i].iov_len) {
+			copied = msg->msg_iov[i].iov_len;
+			msg->msg_flags |= MSG_TRUNC;
+		}
 
-	err = skb_copy_datagram_iovec(skb, 0, msg->msg_iov, copied);
-	if (unlikely(err)) {
-		log_error("skb_copy_datagram_iovec\n");
-		goto out_free;
-	}
+		err = skb_copy_datagram_iovec(skb, 0, &msg->msg_iov[i], copied);
+		if (unlikely(err)) {
+			log_error("skb_copy_datagram_iovec\n");
+			goto out_free;
+		}
 
-	sock_recv_ts_and_drops(msg, sk, skb);
+		sock_recv_ts_and_drops(msg, sk, skb);
 
-	if (msg->msg_name)
-		memcpy(msg->msg_name, swift_addr, msg->msg_namelen);
-	
-	err = copied;
+		if (ret_addr)
+			memcpy(&ret_addr->dests[i], &swift_addr->dests[0], sizeof(ret_addr->dests[i]));
+
+		err = copied;
 
 out_free:
-	skb_free_datagram(sk, skb);
+	    skb_free_datagram(sk, skb);
+
+		skb = skb_recv_datagram(sk, flags, 1, &err);
+		if (likely(err == -EAGAIN)) {
+			log_debug("No more skbs in the queue, returning...\n");
+			err = copied;
+			break;
+		}
+	}
+
+	ret_addr->count = i + 1;
+	msg->msg_namelen = sizeof(struct sockaddr_swift) + (i + 1) * sizeof(struct swift_dest);
 
 out:
 	return err;
@@ -404,6 +417,7 @@ static int swift_rcv(struct sk_buff *skb)
 	uint8_t src, dst;
 	struct sockaddr_swift * swift_addr;
 	int err;
+	int addr_size = sizeof(struct sockaddr_swift) + sizeof(struct swift_dest);
 
 	if (unlikely(!pskb_may_pull(skb, sizeof(struct swifthdr)))) {
 		log_error("Insufficient space for header\n");
@@ -443,7 +457,7 @@ static int swift_rcv(struct sk_buff *skb)
 		goto drop;
 	}
 
-	BUILD_BUG_ON(sizeof(struct sockaddr_swift) > sizeof(skb->cb));
+	BUG_ON(addr_size > sizeof(skb->cb));
 	
 	swift_addr = (struct sockaddr_swift *) skb->cb;
 	swift_addr->dests[0].port = shdr->src;

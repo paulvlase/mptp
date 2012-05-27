@@ -6,9 +6,21 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <stdlib.h>
+#include <time.h>
 
-#define ADDR 0x80BEA8C0
-#define DADDR 0x81BEA8C0
+#define ADDR 0x8082A8C0
+#define DADDR 0x8082A8C0
+
+int gen_port()
+{
+	int ret;
+	srand(time(NULL));
+	ret = (rand() % 255) + 1;
+	if (ret == 100 || ret == 101)
+		ret *= 2;
+	printf("Generated source port %d\n", ret);
+	return ret;
+}
 
 int main(int argc, const char *argv[])
 {
@@ -26,7 +38,7 @@ int main(int argc, const char *argv[])
 
     saddr->count = 1;
     saddr->dests[0].addr = ADDR;
-    saddr->dests[0].port = 50;
+    saddr->dests[0].port = gen_port();
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
         perror("Failed to bind socket");
@@ -34,7 +46,7 @@ int main(int argc, const char *argv[])
         return -1;
     }
 
-    char buf[] = "Buffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de testBuffer de test";
+    char buf[] = "Buffer1";
     char buf2[] = "Buffer2";
     struct iovec iov[2];
     struct msghdr msg;
