@@ -8,23 +8,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define ADDR 0x8082A8C0
-#define DADDR 0x8082A8C0
-
-int gen_port()
-{
-	int ret;
-	srand(time(NULL));
-	ret = (rand() % 255) + 1;
-	if (ret == 100 || ret == 101)
-		ret *= 2;
-	printf("Generated source port %d\n", ret);
-	return ret;
-}
-
 int main(int argc, const char *argv[])
 {
     int sock;
+	int i;
 
     sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock < 0) {
@@ -35,8 +22,8 @@ int main(int argc, const char *argv[])
 	struct sockaddr_in saddr;
     memset(&saddr, 0, sizeof(saddr));
 
-	saddr.sin_addr.s_addr = ADDR;
-	saddr.sin_port = gen_port();
+	inet_pton(AF_INET, "192.168.130.128", &saddr.sin_addr.s_addr);
+	saddr.sin_port = 0;
 	saddr.sin_family = AF_INET;
 
     if (bind(sock, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
@@ -58,8 +45,8 @@ int main(int argc, const char *argv[])
     iov[0].iov_base = buf;
     iov[0].iov_len = sizeof(buf);
 
-	to.sin_addr.s_addr = DADDR;
-	to.sin_port = 100;
+	inet_pton(AF_INET, "192.168.130.129", &to.sin_addr.s_addr);
+	to.sin_port = htons(100);
 	to.sin_family = AF_INET;
 
     msg.msg_iov = iov;
@@ -69,13 +56,18 @@ int main(int argc, const char *argv[])
 
     int ret;
 
-    ret = sendmsg(sock, &msg, sizeof(msg));
-    if (ret < 0) {
-        perror("Failed to send on socket");
-        return -1;
-    }
+	struct timeval tv1, tv2;
+	gettimeofday(&tv1, NULL);
+	for (i = 0; i < 10000; i++) {
+		ret = sendmsg(sock, &msg, 0);
+		if (ret < 0) {
+			perror("Failed to send on socket");
+			return -1;
+		}
+	}
+	gettimeofday(&tv2, NULL);
 
-    printf("Sent %d bytes on socket\n", msg.msg_namelen);
+	printf("diff=%ld\n", (tv2.tv_sec - tv1.tv_sec) * 1000 + (tv2.tv_usec - tv1.tv_usec) / 1000);
 
     if (close(sock) < 0) {
         perror("Failed to close socket");
