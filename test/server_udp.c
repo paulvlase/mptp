@@ -7,9 +7,6 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
-#define ADDR 0x8182A8C0
-#define NUM_BUF 10
-
 int main(int argc, const char *argv[])
 {
     int sock;
@@ -29,7 +26,7 @@ int main(int argc, const char *argv[])
     struct sockaddr_in saddr;
     memset(&saddr, 0, sizeof(saddr));
 
-	saddr.sin_addr.s_addr = ADDR;
+	inet_pton(AF_INET, "192.168.130.129", &saddr.sin_addr.s_addr);
 	saddr.sin_port = htons(atoi(argv[1]));
 	saddr.sin_family = AF_INET;
 
@@ -58,11 +55,17 @@ int main(int argc, const char *argv[])
 
     int ret, fromlen;
 
-    ret = recvmsg(sock, &msg, 0);
-    if (ret < 0) {
-        perror("Failed to recv on socket");
-        return -1;
-    }
+#define N 10000
+
+	for (i = 0; i < N; i ++) {
+		ret = recvmsg(sock, &msg, 0);
+		if (ret < 0) {
+			perror("Failed to recv on socket");
+			return -1;
+		}
+		if (i % (N / 50) == 0)
+			printf("%d\n", i);
+	}
 
     printf("Received %d bytes on socket\n", ret);
 	printf("buf=%s\n", buf);
