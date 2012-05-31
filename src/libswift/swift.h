@@ -108,6 +108,11 @@ namespace swift {
 	Address() {
 	    clear();
 	}
+	Address(const Address &b) {
+	    clear();
+		addr->dests[0].addr = b.addr->dests[0].addr;
+		addr->dests[0].port = b.addr->dests[0].port;
+	}
 	Address(const char* ip, uint16_t port)  {
 	    clear();
 	    set_ipv4(ip);
