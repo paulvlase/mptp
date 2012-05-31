@@ -134,6 +134,15 @@ namespace swift {
 	}
 	uint32_t ipv4 () const { return ntohl(addr->dests[0].addr); }
 	uint16_t port () const { return ntohs(addr->dests[0].port); }
+	Address& operator = (const Address& b) {
+		if (this != &b) {
+			free(addr);
+			clear();
+			addr->dests[0].addr = b.addr->dests[0].addr;
+			addr->dests[0].port = b.addr->dests[0].port;
+		}
+		return *this;
+	}
 	bool operator == (const Address& b) const {
 	    return addr->count == b.addr->count &&
 		addr->dests[0].port==b.addr->dests[0].port &&
