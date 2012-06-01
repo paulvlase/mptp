@@ -62,7 +62,7 @@ TEST(Datagram, BinaryTest) {
 	event_base_dispatch(evbase);
 	struct evbuffer *rcv = evbuffer_new();
 	Address address;
-	ASSERT_EQ(datalen,Channel::RecvFrom(socket, address, rcv));
+	ASSERT_EQ(datalen,Channel::RecvFrom(socket, address, &rcv));
 	evbuffer_remove(rcv, buf, strlen(text));
 	buf[strlen(text)] = 0;
 	uint8_t rnum8 = evbuffer_remove_8(rcv);
@@ -99,7 +99,7 @@ TEST(Datagram,TwoPortTest) {
 	event_base_dispatch(evbase);
 	struct evbuffer *rcv = evbuffer_new();
 	Address address;
-	Channel::RecvFrom(sock2, address, rcv);
+	Channel::RecvFrom(sock2, address, &rcv);
 	uint32_t test = evbuffer_remove_32be(rcv);
 	ASSERT_EQ(1234,test);
 	evbuffer_free(rcv);
