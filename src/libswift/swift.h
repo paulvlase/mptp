@@ -494,7 +494,7 @@ namespace swift {
         static void LibeventSendCallback(int fd, short event, void *arg);
         static void LibeventReceiveCallback(int fd, short event, void *arg);
         static void RecvDatagram (evutil_socket_t socket); // Called by LibeventReceiveCallback
-	    static int RecvFrom(evutil_socket_t sock, Address& addr, struct evbuffer *evb); // Called by RecvDatagram
+	    static int RecvFrom(evutil_socket_t sock, Address& addr, struct evbuffer **evb); // Called by RecvDatagram
 	    static int SendTo(evutil_socket_t sock, const Address& addr, struct evbuffer *evb); // Called by Channel::Send()
 	    static evutil_socket_t Bind(Address address, sckrwecb_t callbacks=sckrwecb_t());
 	    static Address BoundAddress(evutil_socket_t sock);

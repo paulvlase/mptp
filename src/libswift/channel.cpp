@@ -280,21 +280,26 @@ int Channel::SendTo (evutil_socket_t sock, const Address& addr, struct evbuffer 
     return r;
 }
 
-int Channel::RecvFrom (evutil_socket_t sock, Address& addr, struct evbuffer *evb) {
+int Channel::RecvFrom (evutil_socket_t sock, Address& addr, struct evbuffer **evb) {
     socklen_t addrlen = sizeof(struct sockaddr_mptp) + addr.addr->count * sizeof(mptp_dest);
-    struct evbuffer_iovec vec;
-    if (evbuffer_reserve_space(evb, SWIFT_MAX_RECV_DGRAM_SIZE, &vec, 1) < 0) {
-    	print_error("error on evbuffer_reserve_space");
-    	return 0;
-    }
-	struct iovec iov[1];
+	int count = addr.addr->count;
+    struct evbuffer_iovec vec[count];
+	for (int i=0; i<count; ++i) {
+		if (evbuffer_reserve_space(evb[i], SWIFT_MAX_RECV_DGRAM_SIZE, &vec[i], 1) < 0) {
+			print_error("error on evbuffer_reserve_space");
+			return 0;
+		}
+	}
+	struct iovec iov[count];
 	struct msghdr msg;
 	memset(&msg, 0, sizeof(msg));
 	memset(&iov, 0, sizeof(iov));
-	iov[0].iov_base = vec.iov_base;
-	iov[0].iov_len = SWIFT_MAX_RECV_DGRAM_SIZE;
+	for (int i=0; i<count; ++i) {
+		iov[i].iov_base = vec[i].iov_base;
+		iov[i].iov_len = SWIFT_MAX_RECV_DGRAM_SIZE;
+	}
 	msg.msg_iov = iov;
-	msg.msg_iovlen = 1;
+	msg.msg_iovlen = addr.addr->count;
 	msg.msg_name = addr.addr;
 	msg.msg_namelen = addrlen;
 	int length = recvmsg(sock, &msg, 0);
@@ -316,11 +321,13 @@ int Channel::RecvFrom (evutil_socket_t sock, Address& addr, struct evbuffer *evb
         else
         	print_error("error on recv");
     }
-    vec.iov_len = length;
-    if (evbuffer_commit_space(evb, &vec, 1) < 0)  {
-        length = 0;
-        print_error("error on evbuffer_commit_space");
-    }
+	for (int i=0; i<addr.addr->count; ++i) {
+		vec[i].iov_len = iov[i].iov_len;
+		if (evbuffer_commit_space(evb[i], &vec[i], 1) < 0)  {
+			length = 0;
+			print_error("error on evbuffer_commit_space");
+		}
+	}
     global_dgrams_down++;
     global_raw_bytes_down+=length;
     Time();
