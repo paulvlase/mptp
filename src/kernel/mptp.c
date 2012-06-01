@@ -402,6 +402,9 @@ static int mptp_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *
 out_free:
 	    skb_free_datagram(sk, skb);
 
+		if (i == msg->msg_iovlen - 1)
+			break;
+
 		skb = skb_recv_datagram(sk, flags, 1, &err);
 		if (likely(err == -EAGAIN)) {
 			log_debug("No more skbs in the queue, returning...\n");
