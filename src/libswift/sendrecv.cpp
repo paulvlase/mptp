@@ -914,7 +914,7 @@ void Channel::LibeventReceiveCallback(evutil_socket_t fd, short event, void *arg
     event_add(&evrecv, NULL);
 }
 
-#define NUM_DATAGRAMS 1
+#define NUM_DATAGRAMS 10
 
 void    Channel::RecvDatagram (evutil_socket_t socket) {
     struct evbuffer *pevb[NUM_DATAGRAMS];
@@ -927,7 +927,6 @@ void    Channel::RecvDatagram (evutil_socket_t socket) {
 	addr.addr->count = NUM_DATAGRAMS;
     RecvFrom(socket, addr, pevb);
 	int i = 0;
-	printf("Got %d addresses\n", addr.addr->count);
 	for (; i<addr.addr->count; ++i) {
 		struct evbuffer *evb = pevb[i];
 		Address fromi;

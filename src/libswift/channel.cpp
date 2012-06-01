@@ -322,9 +322,13 @@ int Channel::RecvFrom (evutil_socket_t sock, Address& addr, struct evbuffer **ev
         	print_error("error on recv");
     }
 	length = 0;
+	printf("Received from %d addresses in one system call.\n", addr.addr->count);
 	for (int i=0; i<addr.addr->count; ++i) {
-		length += iov[i].iov_len;
-		vec[i].iov_len = iov[i].iov_len;
+		struct in_addr aux;
+		aux.s_addr = addr.addr->dests[i].addr;
+		printf("Received from %s, %d bytes\n", inet_ntoa(aux), addr.addr->dests[i].bytes);
+		length += addr.addr->dests[i].bytes;
+		vec[i].iov_len = addr.addr->dests[i].bytes;
 		if (evbuffer_commit_space(evb[i], &vec[i], 1) < 0)  {
 			length = 0;
 			print_error("error on evbuffer_commit_space");
