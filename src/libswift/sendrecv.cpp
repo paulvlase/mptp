@@ -930,8 +930,8 @@ void    Channel::RecvDatagram (evutil_socket_t socket) {
 	for (; i<addr.addr->count; ++i) {
 		struct evbuffer *evb = pevb[i];
 		Address fromi;
-		fromi.set_ipv4(addr.addr->dests[i].addr);
-		fromi.set_port(addr.addr->dests[i].port);
+		fromi.addr->dests[0].addr = addr.addr->dests[i].addr;
+		fromi.addr->dests[0].port = addr.addr->dests[i].port;
 		size_t evboriglen = evbuffer_get_length(evb);
 #define return_log(...) { fprintf(stderr,__VA_ARGS__); evbuffer_free(evb); return; }
 		if (evbuffer_get_length(evb)<4)
