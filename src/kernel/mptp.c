@@ -388,12 +388,14 @@ static int mptp_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *
 			log_error("skb_copy_datagram_iovec\n");
 			goto out_free;
 		}
-		msg->msg_iov[i].iov_len = copied;
+		log_debug("Received %d bytes\n", copied);
 
 		sock_recv_ts_and_drops(msg, sk, skb);
 
-		if (ret_addr)
+		if (ret_addr) {
 			memcpy(&ret_addr->dests[i], &mptp_addr->dests[0], sizeof(ret_addr->dests[i]));
+			ret_addr->dests[i].bytes = copied;
+		}
 
 		err = copied;
 

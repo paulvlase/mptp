@@ -13,6 +13,7 @@
 struct mptp_dest {
     uint32_t addr;
     uint16_t port;
+	uint16_t bytes;
 };
 
 struct sockaddr_mptp {
