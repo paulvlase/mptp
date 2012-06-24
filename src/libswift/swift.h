@@ -65,7 +65,7 @@
 #include "hashtree.h"
 #include "avgspeed.h"
 #include "availability.h"
-
+#include "../kernel/mptp.h"
 
 namespace swift {
 
@@ -86,10 +86,10 @@ namespace swift {
 
 /** IPv4 address, just a nice wrapping around struct sockaddr_in. */
     struct Address {
-	struct sockaddr_in  addr;
+	struct sockaddr_mptp *addr;
 	static uint32_t LOCALHOST;
 	void set_port (uint16_t port) {
-	    addr.sin_port = htons(port);
+	    addr->dests[0].port = htons(port);
 	}
 	void set_port (const char* port_str) {
 	    int p;
@@ -97,13 +97,12 @@ namespace swift {
 		set_port(p);
 	}
 	void set_ipv4 (uint32_t ipv4) {
-	    addr.sin_addr.s_addr = htonl(ipv4);
+	    addr->dests[0].addr = htonl(ipv4);
 	}
 	void set_ipv4 (const char* ipv4_str) ;
 	//{    inet_aton(ipv4_str,&(addr.sin_addr));    }
 	void clear () {
-	    memset(&addr,0,sizeof(struct sockaddr_in));
-	    addr.sin_family = AF_INET;
+		addr = (struct sockaddr_mptp *)calloc(1, sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest));
 	}
 	Address() {
 	    clear();
@@ -124,14 +123,19 @@ namespace swift {
 	    set_ipv4(ipv4addr);
 	    set_port(port);
 	}
-	Address(const struct sockaddr_in& address) : addr(address) {}
-	uint32_t ipv4 () const { return ntohl(addr.sin_addr.s_addr); }
-	uint16_t port () const { return ntohs(addr.sin_port); }
-	operator sockaddr_in () const {return addr;}
+	Address(const struct sockaddr_in& address) {
+		addr->dests[0].addr = address.sin_addr.s_addr;
+		addr->dests[0].port = address.sin_port;
+	}
+	~Address(){
+		free(addr);
+	}
+	uint32_t ipv4 () const { return ntohl(addr->dests[0].addr); }
+	uint16_t port () const { return ntohs(addr->dests[0].port); }
 	bool operator == (const Address& b) const {
-	    return addr.sin_family==b.addr.sin_family &&
-		addr.sin_port==b.addr.sin_port &&
-		addr.sin_addr.s_addr==b.addr.sin_addr.s_addr;
+	    return addr->count == b.addr->count &&
+		addr->dests[0].port==b.addr->dests[0].port &&
+		addr->dests[0].addr==b.addr->dests[0].addr;
 	}
 	const char* str () const {
 		// Arno, 2011-10-04: not thread safe, replace.

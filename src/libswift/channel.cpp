@@ -13,6 +13,7 @@
 #include "compat.h"
 //#include <glog/logging.h>
 #include "swift.h"
+#include "../kernel/mptp.h"
 
 using namespace std;
 using namespace swift;
@@ -213,12 +214,12 @@ tint Channel::Time () {
 
 // SOCKMGMT
 evutil_socket_t Channel::Bind (Address address, sckrwecb_t callbacks) {
-    struct sockaddr_in addr = address;
+    struct sockaddr_mptp *addr = address.addr;
     evutil_socket_t fd;
-    int len = sizeof(struct sockaddr_in), sndbuf=1<<20, rcvbuf=1<<20;
+    int len = sizeof(struct sockaddr_mptp) + addr->count*sizeof(struct mptp_dest), sndbuf=1<<20, rcvbuf=1<<20;
     #define dbnd_ensure(x) { if (!(x)) { \
         print_error("binding fails"); close_socket(fd); return INVALID_SOCKET; } }
-    dbnd_ensure ( (fd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0 );
+    dbnd_ensure ( (fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_MPTP)) >= 0 );
     dbnd_ensure( make_socket_nonblocking(fd) );  // FIXME may remove this
     int enable = true;
     dbnd_ensure ( setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
@@ -255,8 +256,9 @@ Address swift::BoundAddress(evutil_socket_t sock) {
 int Channel::SendTo (evutil_socket_t sock, const Address& addr, struct evbuffer *evb) {
 
     int length = evbuffer_get_length(evb);
+	int addr_len = sizeof(struct sockaddr_mptp) + addr.addr->count * sizeof(struct mptp_dest);
     int r = sendto(sock,(const char *)evbuffer_pullup(evb, length),length,0,
-                   (struct sockaddr*)&(addr.addr),sizeof(struct sockaddr_in));
+                   (struct sockaddr*)&(addr.addr),addr_len);
     if (r<0) {
         print_error("can't send");
         evbuffer_drain(evb, length); // Arno: behaviour is to pretend the packet got lost
@@ -270,7 +272,7 @@ int Channel::SendTo (evutil_socket_t sock, const Address& addr, struct evbuffer 
 }
 
 int Channel::RecvFrom (evutil_socket_t sock, Address& addr, struct evbuffer *evb) {
-    socklen_t addrlen = sizeof(struct sockaddr_in);
+    socklen_t addrlen = sizeof(struct sockaddr_mptp) + addr.addr->count * sizeof(mptp_dest);
     struct evbuffer_iovec vec;
     if (evbuffer_reserve_space(evb, SWIFT_MAX_RECV_DGRAM_SIZE, &vec, 1) < 0) {
     	print_error("error on evbuffer_reserve_space");
@@ -342,7 +344,7 @@ void Address::set_ipv4 (const char* ip_str) {
         print_error("cannot lookup address");
         return;
     } else {
-        addr.sin_addr.s_addr = *(u_long *) h->h_addr_list[0];
+        addr->dests[0].addr = *(u_long *) h->h_addr_list[0];
     }
 }
 
