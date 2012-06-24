@@ -8,62 +8,62 @@
 #include "swift.h"
 #include "debug.h"
 
-MODULE_DESCRIPTION("Swift Transport Protocol");
+MODULE_DESCRIPTION("Multi-Party Transport Protocol");
 MODULE_AUTHOR("Adrian Bondrescu/Cornel Mercan");
 MODULE_LICENSE("GPL");
 
-struct swift_sock {
+struct mptp_sock {
 	struct inet_sock sock;
-	/* swift socket speciffic data */
+	/* mptp socket speciffic data */
 	uint8_t src;
 	uint8_t dst;
 };
 
-static struct swift_sock * sock_port_map[MAX_SWIFT_PORT];
+static struct mptp_sock * sock_port_map[MAX_MPTP_PORT];
 
-static inline struct swift_sock * swift_sk(struct sock * sock)
+static inline struct mptp_sock * mptp_sk(struct sock * sock)
 {
-	return (struct swift_sock *)(sock);
+	return (struct mptp_sock *)(sock);
 }
 
-static inline struct swifthdr * swift_hdr(const struct sk_buff * skb)
+static inline struct mptphdr * mptp_hdr(const struct sk_buff * skb)
 {
-	return (struct swifthdr *) skb_transport_header(skb);
+	return (struct mptphdr *) skb_transport_header(skb);
 }
 
 static inline uint8_t get_next_free_port(void)
 {
 	int i;
-	for (i = MIN_SWIFT_PORT; i < MAX_SWIFT_PORT; i ++)
+	for (i = MIN_MPTP_PORT; i < MAX_MPTP_PORT; i ++)
 		if (sock_port_map[i] == NULL)
 			return i;
 	return 0;
 }
 
-static inline void swift_unhash(uint8_t port)
+static inline void mptp_unhash(uint8_t port)
 {
 	sock_port_map[port] = NULL;
 }
 
-static inline void swift_hash(uint8_t port, struct swift_sock *ssh)
+static inline void mptp_hash(uint8_t port, struct mptp_sock *ssh)
 {
 	sock_port_map[port] = ssh;
 }
 
-static inline struct swift_sock * swift_lookup(uint8_t port)
+static inline struct mptp_sock * mptp_lookup(uint8_t port)
 {
 	return sock_port_map[port];
 }
 
-static int swift_release(struct socket *sock)
+static int mptp_release(struct socket *sock)
 {
 	struct sock *sk = sock->sk;
-	struct swift_sock * ssk = swift_sk(sk);
+	struct mptp_sock * ssk = mptp_sk(sk);
 
 	if (unlikely(!sk))
 		return 0;
 
-	swift_unhash(ssk->src);
+	mptp_unhash(ssk->src);
 	
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
 
@@ -74,46 +74,46 @@ static int swift_release(struct socket *sock)
 
 	skb_queue_purge(&sk->sk_receive_queue);
 
-	log_debug("swift_release sock=%p\n", sk);
+	log_debug("mptp_release sock=%p\n", sk);
 	sock_put(sk);
 
 	return 0;
 }
 
-static int swift_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
+static int mptp_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 {
-	struct sockaddr_swift *swift_addr;
-	struct swift_sock *ssk;
+	struct sockaddr_mptp *mptp_addr;
+	struct mptp_sock *ssk;
 	int err;
 	uint8_t port;
 
-	if (unlikely(addr_len < sizeof(struct sockaddr_swift))) {
+	if (unlikely(addr_len < sizeof(struct sockaddr_mptp))) {
 		log_error("Invalid size for sockaddr\n");
 		err = -EINVAL;
 		goto out;
 	}
 
-	swift_addr = (struct sockaddr_swift *) addr;
+	mptp_addr = (struct sockaddr_mptp *) addr;
 
-	port = swift_addr->dests[0].port;
+	port = mptp_addr->dests[0].port;
 
-	if (unlikely(port == 0 || port >= MAX_SWIFT_PORT)) {
+	if (unlikely(port == 0 || port >= MAX_MPTP_PORT)) {
 		log_error("Invalid value for sockaddr port (%u)\n", port);
 		err = -EINVAL;
 		goto out;
 	}
 	
-	if (unlikely(swift_lookup(port) != NULL)) {
+	if (unlikely(mptp_lookup(port) != NULL)) {
 		log_error("Port %u already in use\n", port);
 		err = -EADDRINUSE;
 		goto out;
 	}
 
-	ssk = swift_sk(sock->sk);
+	ssk = mptp_sk(sock->sk);
     sock->sk->sk_rcvbuf = 10 * 1024 * 1024;
 	ssk->src = port;
 
-	swift_hash(port, ssk);
+	mptp_hash(port, ssk);
 
 	log_debug("Socket %p bound to port %u\n", ssk, port);
 	
@@ -123,14 +123,14 @@ out:
 	return err;
 }
 
-static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_len, int flags)
+static int mptp_connect(struct socket *sock, struct sockaddr *addr, int addr_len, int flags)
 {
 	int err;
 	struct sock * sk; 
 	struct inet_sock * isk;
-	struct swift_sock * ssk;
+	struct mptp_sock * ssk;
 
-	log_debug("swift_connect\n");
+	log_debug("mptp_connect\n");
 
 	if (unlikely(sock == NULL)) {
 		log_error("Sock is NULL\n");
@@ -146,7 +146,7 @@ static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_le
 	}
 
 	isk = inet_sk(sk);
-	ssk = swift_sk(sk);
+	ssk = mptp_sk(sk);
 
 	if (unlikely(ssk->src != 0)) {
 		log_error("ssk->src is not NULL\n");
@@ -155,26 +155,26 @@ static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_le
 	}
 	
 	if (likely(addr)) {
-		struct sockaddr_swift * swift_addr = (struct sockaddr_swift *) addr;
+		struct sockaddr_mptp * mptp_addr = (struct sockaddr_mptp *) addr;
 		
-        if (unlikely(addr_len < sizeof(*swift_addr) || 
-                     addr_len < swift_addr->count * sizeof(struct swift_dest) || 
-                     swift_addr->count <= 0)) {
+        if (unlikely(addr_len < sizeof(*mptp_addr) || 
+                     addr_len < mptp_addr->count * sizeof(struct mptp_dest) || 
+                     mptp_addr->count <= 0)) {
 			log_error("Invalid size or address family\n");
 			err = -EINVAL;
 			goto out;
 		}
-		ssk->dst = swift_addr->dests[0].port;
-		if (unlikely(ssk->dst == 0 || ssk->dst >= MAX_SWIFT_PORT)) {
+		ssk->dst = mptp_addr->dests[0].port;
+		if (unlikely(ssk->dst == 0 || ssk->dst >= MAX_MPTP_PORT)) {
 			log_error("Invalid value for destination port(%u)\n", ssk->dst);
 			err = -EINVAL;
 			goto out;
 		}	
 	
-		isk->inet_daddr = swift_addr->dests[0].addr;
+		isk->inet_daddr = mptp_addr->dests[0].addr;
 		log_debug("Received from user space destination port=%u and address=%u\n", ssk->dst, isk->inet_daddr);
 	} else {
-		log_error("Invalid swift_addr (NULL)\n");
+		log_error("Invalid mptp_addr (NULL)\n");
 		err = -EINVAL;
 		goto out;
 	}
@@ -186,7 +186,7 @@ static int swift_connect(struct socket *sock, struct sockaddr *addr, int addr_le
 		goto out;
 	}
 	
-	swift_hash(ssk->src, ssk);
+	mptp_hash(ssk->src, ssk);
 
 	return 0;
 
@@ -194,7 +194,7 @@ out:
 	return err;
 }
 
-static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg, size_t len)
+static int mptp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg, size_t len)
 {
 	int err;
 	uint8_t dport;
@@ -203,14 +203,14 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
     struct sk_buff * skb;
     struct sock * sk; 
     struct inet_sock * isk;
-    struct swift_sock * ssk;
-    struct swifthdr * shdr;
+    struct mptp_sock * ssk;
+    struct mptphdr * shdr;
     int connected = 0;
     int totlen;
     struct rtable * rt = NULL;
     int dests = 0;
     int i;
-    struct sockaddr_swift * swift_addr = NULL;
+    struct sockaddr_mptp * mptp_addr = NULL;
 
     if (unlikely(sock == NULL)) {
         log_error("Sock is NULL\n");
@@ -226,7 +226,7 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
     }
 
     isk = inet_sk(sk);
-    ssk = swift_sk(sk);
+    ssk = mptp_sk(sk);
 
     sport = ssk->src;
     if (sport == 0) {
@@ -239,17 +239,17 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
     }
 
     if (msg->msg_name) {
-        swift_addr = (struct sockaddr_swift *) msg->msg_name;
+        mptp_addr = (struct sockaddr_mptp *) msg->msg_name;
 
-        if (unlikely(msg->msg_namelen < sizeof(*swift_addr) || 
-                     msg->msg_namelen < swift_addr->count * sizeof(struct swift_dest) || 
-                     swift_addr->count <= 0)) {
+        if (unlikely(msg->msg_namelen < sizeof(*mptp_addr) || 
+                     msg->msg_namelen < mptp_addr->count * sizeof(struct mptp_dest) || 
+                     mptp_addr->count <= 0)) {
             log_error("Invalid size for msg_name\n");
             err = -EINVAL;
             goto out;
         }
 
-        dests = swift_addr->count;
+        dests = mptp_addr->count;
     } else {
         BUG();
         if (unlikely(!ssk->dst || !isk->inet_daddr)) {
@@ -268,12 +268,12 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
         dests = msg->msg_iovlen;
 
     for (i = 0; i < dests; i++) {
-        struct swift_dest *dest = &swift_addr->dests[i];
+        struct mptp_dest *dest = &mptp_addr->dests[i];
         struct iovec *iov = &msg->msg_iov[i];
         char *payload;
 
         dport = dest->port;
-        if (unlikely(dport == 0 || dport >= MAX_SWIFT_PORT)) {
+        if (unlikely(dport == 0 || dport >= MAX_MPTP_PORT)) {
             log_error("Invalid value for destination port(%u)\n", dport);
             err = -EINVAL;
             goto out;
@@ -283,7 +283,7 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
         log_debug("Received from user space destination port=%u and address=%u\n", dport, daddr);
 
         len = iov->iov_len;
-        totlen = len + sizeof(struct swifthdr) + sizeof(struct iphdr);
+        totlen = len + sizeof(struct mptphdr) + sizeof(struct iphdr);
         skb = sock_alloc_send_skb(sk, totlen, msg->msg_flags & MSG_DONTWAIT, &err);
         if (unlikely(!skb)) {
             log_error("sock_alloc_send_skb failed\n");
@@ -295,18 +295,18 @@ static int swift_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
         skb_reserve(skb, sizeof(struct iphdr));
         log_debug("Reseted network header\n");
         skb_reset_transport_header(skb);
-        skb_put(skb, sizeof(struct swifthdr));
+        skb_put(skb, sizeof(struct mptphdr));
         log_debug("Reseted transport header\n");
 
-        shdr = (struct swifthdr *) skb_transport_header(skb);
+        shdr = (struct mptphdr *) skb_transport_header(skb);
         shdr->dst = dport;
         shdr->src = sport;
-        shdr->len = ntohs(len + sizeof(struct swifthdr));
+        shdr->len = ntohs(len + sizeof(struct mptphdr));
 
         payload = skb_put(skb, len);
         log_debug("payload=%p\n", payload);
 
-        err = skb_copy_datagram_from_iovec(skb, sizeof(struct swifthdr), iov, 0, len);
+        err = skb_copy_datagram_from_iovec(skb, sizeof(struct mptphdr), iov, 0, len);
         if (unlikely(err)) {
             log_error("skb_copy_datagram_from_iovec failed\n");
             goto out_free;
@@ -350,14 +350,14 @@ out:
 	return err;
 }
 
-static int swift_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg, size_t len, int flags)
+static int mptp_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg, size_t len, int flags)
 {
 	struct sk_buff *skb;
-	struct sockaddr_swift *swift_addr;
+	struct sockaddr_mptp *mptp_addr;
 	struct sock * sk = sock->sk;
 	int err, copied;
 	int i;
-	struct sockaddr_swift *ret_addr = (struct sockaddr_swift *) msg->msg_name;
+	struct sockaddr_mptp *ret_addr = (struct sockaddr_mptp *) msg->msg_name;
 
     log_debug("Trying to receive sock=%p sk=%p flags=%d\n", sock, sk, flags);
 
@@ -370,7 +370,7 @@ static int swift_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 	for (i = 0; i < msg->msg_iovlen; i++) {
 		log_debug("Received skb %p\n", skb);
 
-		swift_addr = (struct sockaddr_swift *) skb->cb;
+		mptp_addr = (struct sockaddr_mptp *) skb->cb;
 
 		copied = skb->len;
 		if (copied > msg->msg_iov[i].iov_len) {
@@ -387,7 +387,7 @@ static int swift_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 		sock_recv_ts_and_drops(msg, sk, skb);
 
 		if (ret_addr)
-			memcpy(&ret_addr->dests[i], &swift_addr->dests[0], sizeof(ret_addr->dests[i]));
+			memcpy(&ret_addr->dests[i], &mptp_addr->dests[0], sizeof(ret_addr->dests[i]));
 
 		err = copied;
 
@@ -403,28 +403,28 @@ out_free:
 	}
 
 	ret_addr->count = i + 1;
-	msg->msg_namelen = sizeof(struct sockaddr_swift) + (i + 1) * sizeof(struct swift_dest);
+	msg->msg_namelen = sizeof(struct sockaddr_mptp) + (i + 1) * sizeof(struct mptp_dest);
 
 out:
 	return err;
 }
 
-static int swift_rcv(struct sk_buff *skb)
+static int mptp_rcv(struct sk_buff *skb)
 {
-	struct swifthdr *shdr;
-	struct swift_sock *ssk;
+	struct mptphdr *shdr;
+	struct mptp_sock *ssk;
 	__be16 len;
 	uint8_t src, dst;
-	struct sockaddr_swift * swift_addr;
+	struct sockaddr_mptp * mptp_addr;
 	int err;
-	int addr_size = sizeof(struct sockaddr_swift) + sizeof(struct swift_dest);
+	int addr_size = sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest);
 
-	if (unlikely(!pskb_may_pull(skb, sizeof(struct swifthdr)))) {
+	if (unlikely(!pskb_may_pull(skb, sizeof(struct mptphdr)))) {
 		log_error("Insufficient space for header\n");
 		goto drop;
 	}
 	
-	shdr = (struct swifthdr *) skb->data;
+	shdr = (struct mptphdr *) skb->data;
 	len = ntohs(shdr->len);
 
 	if (unlikely(skb->len < len)) {
@@ -432,38 +432,38 @@ static int swift_rcv(struct sk_buff *skb)
 		goto drop;
 	}
 
-	if (unlikely(len < sizeof(struct swifthdr))) {
-		log_error("Malformed packet (packet_len=%u sizeof(swifthdr)=%u\n", len, sizeof(struct swifthdr));
+	if (unlikely(len < sizeof(struct mptphdr))) {
+		log_error("Malformed packet (packet_len=%u sizeof(mptphdr)=%u\n", len, sizeof(struct mptphdr));
 		goto drop;
 	}
 	
 	src = shdr->src;
 	dst = shdr->dst;
-	if (unlikely(src == 0 || dst == 0 || src >= MAX_SWIFT_PORT || dst >= MAX_SWIFT_PORT)) {
+	if (unlikely(src == 0 || dst == 0 || src >= MAX_MPTP_PORT || dst >= MAX_MPTP_PORT)) {
 		log_error("Malformed packet (src=%u, dst=%u)\n", shdr->src, shdr->dst);
 		goto drop;
 	}
 
-	skb_pull(skb, sizeof(struct swifthdr));
-	len -= sizeof(struct swifthdr);
+	skb_pull(skb, sizeof(struct mptphdr));
+	len -= sizeof(struct mptphdr);
 
 	pskb_trim(skb, len);
 
-	log_debug("Received %u bytes from from port=%u to port=%u\n", len - sizeof(struct swifthdr), src, dst);
+	log_debug("Received %u bytes from from port=%u to port=%u\n", len - sizeof(struct mptphdr), src, dst);
 
-	ssk = swift_lookup(dst); 
+	ssk = mptp_lookup(dst); 
 	if (ssk == NULL) {
-		log_error("Swift lookup failed for port %u\n", dst);
+		log_error("MPTP lookup failed for port %u\n", dst);
 		goto drop;
 	}
 
 	BUG_ON(addr_size > sizeof(skb->cb));
 	
-	swift_addr = (struct sockaddr_swift *) skb->cb;
-	swift_addr->dests[0].port = shdr->src;
-	swift_addr->dests[0].addr = ip_hdr(skb)->saddr;
+	mptp_addr = (struct sockaddr_mptp *) skb->cb;
+	mptp_addr->dests[0].port = shdr->src;
+	mptp_addr->dests[0].addr = ip_hdr(skb)->saddr;
 
-	log_debug("Setting sin_port=%u, sin_addr=%u\n", ntohs(shdr->src), swift_addr->dests[0].addr);
+	log_debug("Setting sin_port=%u, sin_addr=%u\n", ntohs(shdr->src), mptp_addr->dests[0].addr);
 
 	err = ip_queue_rcv_skb((struct sock *) &ssk->sock, skb);
 	if (unlikely(err)) {
@@ -477,18 +477,18 @@ drop:
 	return NET_RX_DROP;
 }
 
-static struct proto swift_prot = {
-	.obj_size = sizeof(struct swift_sock),
+static struct proto mptp_prot = {
+	.obj_size = sizeof(struct mptp_sock),
 	.owner    = THIS_MODULE,
-	.name     = "SWIFT",
+	.name     = "MPTP",
 };
 
-static const struct proto_ops swift_ops = {
+static const struct proto_ops mptp_ops = {
 	.family     = PF_INET,
 	.owner      = THIS_MODULE,
-	.release    = swift_release,
-	.bind       = swift_bind,
-	.connect    = swift_connect,
+	.release    = mptp_release,
+	.bind       = mptp_bind,
+	.connect    = mptp_connect,
 	.socketpair = sock_no_socketpair,
 	.accept     = sock_no_accept,
 	.getname    = sock_no_getname,
@@ -498,64 +498,64 @@ static const struct proto_ops swift_ops = {
 	.shutdown   = sock_no_shutdown,
 	.setsockopt = sock_no_setsockopt,
 	.getsockopt = sock_no_getsockopt,
-	.sendmsg    = swift_sendmsg,
-	.recvmsg    = swift_recvmsg,
+	.sendmsg    = mptp_sendmsg,
+	.recvmsg    = mptp_recvmsg,
 	.mmap       = sock_no_mmap,
 	.sendpage   = sock_no_sendpage,
 };
 
-static const struct net_protocol swift_protocol = {
-	.handler   = swift_rcv,
+static const struct net_protocol mptp_protocol = {
+	.handler   = mptp_rcv,
 	.no_policy = 1,
 	.netns_ok  = 1,
 };
 
-static struct inet_protosw swift_protosw = {
+static struct inet_protosw mptp_protosw = {
 	.type     = SOCK_DGRAM,
-	.protocol = IPPROTO_SWIFT,
-	.prot     = &swift_prot,
-	.ops      = &swift_ops,
+	.protocol = IPPROTO_MPTP,
+	.prot     = &mptp_prot,
+	.ops      = &mptp_ops,
 	.no_check = 0,
 };
 
-static int __init swift_init(void)
+static int __init mptp_init(void)
 {
 	int rc;
 
-	rc = proto_register(&swift_prot, 1);
+	rc = proto_register(&mptp_prot, 1);
 	if (unlikely(rc)) {
-		log_error("Error registering swift protocol\n");
+		log_error("Error registering mptp protocol\n");
 		goto out;
 	}
 
-	rc = inet_add_protocol(&swift_protocol, IPPROTO_SWIFT);
+	rc = inet_add_protocol(&mptp_protocol, IPPROTO_MPTP);
 	if (unlikely(rc)) {
-		log_error("Error adding swift protocol\n");
+		log_error("Error adding mptp protocol\n");
 		goto out_unregister;
 	}
 
-	inet_register_protosw(&swift_protosw);
-	log_debug("Swift entered\n");
+	inet_register_protosw(&mptp_protosw);
+	log_debug("MPTP entered\n");
 
 	return 0;
 
 out_unregister:
-	proto_unregister(&swift_prot);
+	proto_unregister(&mptp_prot);
 
 out:
 	return rc;
 }
 
-static void __exit swift_exit(void)
+static void __exit mptp_exit(void)
 {
-	inet_unregister_protosw(&swift_protosw);
+	inet_unregister_protosw(&mptp_protosw);
 
-	inet_del_protocol(&swift_protocol, IPPROTO_SWIFT);
+	inet_del_protocol(&mptp_protocol, IPPROTO_MPTP);
 
-	proto_unregister(&swift_prot);
+	proto_unregister(&mptp_prot);
 
-	log_debug("Swift exited\n");
+	log_debug("MPTP exited\n");
 }
 
-module_init(swift_init);
-module_exit(swift_exit);
+module_init(mptp_init);
+module_exit(mptp_exit);
