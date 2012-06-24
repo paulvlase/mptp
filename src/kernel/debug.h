@@ -1,5 +1,5 @@
-#ifndef _SWIFT_DEBUG_H
-#define _SWIFT_DEBUG_H
+#ifndef _MPTP_DEBUG_H
+#define _MPTP_DEBUG_H
 
 #define log_error(...) printk(KERN_ERR "SWIF-ERROR : " __VA_ARGS__)
 

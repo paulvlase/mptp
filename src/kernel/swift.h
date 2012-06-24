@@ -1,27 +1,27 @@
-#ifndef _SWIFT_H
-#define _SWIFT_H
+#ifndef _MPTP_H
+#define _MPTP_H
 
-#define IPPROTO_SWIFT 137
+#define IPPROTO_MPTP 137
 
-#define MIN_SWIFT_PORT 1
-#define MAX_SWIFT_PORT 256
+#define MIN_MPTP_PORT 1
+#define MAX_MPTP_PORT 256
 
 #ifndef __KERNEL__
 #include <inttypes.h>
 #endif
 
-struct swift_dest {
+struct mptp_dest {
     uint32_t addr;
     uint8_t port;
 };
 
-struct sockaddr_swift {
+struct sockaddr_mptp {
     int count;
-    struct swift_dest dests[0];
+    struct mptp_dest dests[0];
 };
 
 #ifdef __KERNEL__
-struct swifthdr {
+struct mptphdr {
 	uint8_t src;
 	uint8_t dst;
 	__be16 len;
