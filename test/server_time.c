@@ -1,4 +1,4 @@
-#include "../src/kernel/swift.h"
+#include "../src/kernel/mptp.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -20,14 +20,14 @@ int main(int argc, const char *argv[])
         return -1;
     }
 
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_SWIFT);
+    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_MPTP);
     if (sock < 0) {
         perror("Failed to create socket");
         return -1;
     }
 
-    int size = sizeof(struct sockaddr_swift) + sizeof(struct swift_dest);
-    struct sockaddr_swift *saddr = malloc(size);
+    int size = sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest);
+    struct sockaddr_mptp *saddr = malloc(size);
     memset(saddr, 0, size);
 
     saddr->count = 1;
@@ -40,12 +40,12 @@ int main(int argc, const char *argv[])
         return -1;
     }
 
-#define N 1
+#define N 16
     char buf[N][4096];
     struct iovec iov[N];
     struct msghdr msg;
-	size += (N - 1) * sizeof(struct swift_dest);
-    struct sockaddr_swift *from = malloc(size);
+	size += (N - 1) * sizeof(struct mptp_dest);
+    struct sockaddr_mptp *from = malloc(size);
 
     memset(&msg, 0, sizeof(msg));
     memset(&iov, 0, sizeof(iov));

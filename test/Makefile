@@ -34,3 +34,6 @@ server_lf.o: server_lf.c
 client_time.o: client_time.c
 
 server_time.o: server_time.c
+
+clean:
+	rm -f *.o *~ client server client_udp server_udp client_lf server_lf client_time server_time

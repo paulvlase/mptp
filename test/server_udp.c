@@ -1,5 +1,3 @@
-#include "../src/kernel/swift.h"
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <stdio.h>
