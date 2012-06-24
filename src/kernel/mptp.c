@@ -5,7 +5,7 @@
 #include <net/ip.h>
 #include <net/route.h>
 
-#include "swift.h"
+#include "mptp.h"
 #include "debug.h"
 
 MODULE_DESCRIPTION("Multi-Party Transport Protocol");
