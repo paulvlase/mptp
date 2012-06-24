@@ -1,0 +1,16 @@
+[==========] Running 4 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 4 tests from Sha1HashTest
+[ RUN      ] Sha1HashTest.Trivial
+[       OK ] Sha1HashTest.Trivial (0 ms)
+[ RUN      ] Sha1HashTest.OfferDataTest
+[       OK ] Sha1HashTest.OfferDataTest (2 ms)
+[ RUN      ] Sha1HashTest.SubmitTest
+[       OK ] Sha1HashTest.SubmitTest (1 ms)
+[ RUN      ] Sha1HashTest.OfferDataTest2
+[       OK ] Sha1HashTest.OfferDataTest2 (2 ms)
+[----------] 4 tests from Sha1HashTest (5 ms total)
+
+[----------] Global test environment tear-down
+[==========] 4 tests from 1 test case ran. (6 ms total)
+[  PASSED  ] 4 tests.
