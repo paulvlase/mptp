@@ -32,7 +32,7 @@ int main(int argc, const char *argv[])
 
     saddr->count = 1;
     saddr->dests[0].addr = ADDR;
-    saddr->dests[0].port = atoi(argv[1]);
+    saddr->dests[0].port = htons(atoi(argv[1]));
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
         perror("Failed to bind socket");

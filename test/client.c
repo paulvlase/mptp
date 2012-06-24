@@ -8,14 +8,14 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define ADDR 0x8082A8C0
-#define DADDR 0x8082A8C0
+#define ADDR 0x8182A8C0
+#define DADDR 0x8182A8C0
 
 int gen_port()
 {
 	int ret;
 	srand(time(NULL));
-	ret = (rand() % 255) + 1;
+	ret = (rand() % 65536) + 1;
 	if (ret == 100 || ret == 101)
 		ret *= 2;
 	printf("Generated source port %d\n", ret);
@@ -38,7 +38,7 @@ int main(int argc, const char *argv[])
 
     saddr->count = 1;
     saddr->dests[0].addr = ADDR;
-    saddr->dests[0].port = gen_port();
+    saddr->dests[0].port = htons(gen_port());
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
         perror("Failed to bind socket");
@@ -64,9 +64,9 @@ int main(int argc, const char *argv[])
 
     to->count = 2;
     to->dests[0].addr = DADDR;
-    to->dests[0].port = 100;
+    to->dests[0].port = htons(100);
     to->dests[1].addr = DADDR;
-    to->dests[1].port = 101;
+    to->dests[1].port = htons(101);
 
     msg.msg_iov = iov;
     msg.msg_iovlen = 2;
