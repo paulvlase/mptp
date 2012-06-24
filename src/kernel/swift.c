@@ -363,7 +363,7 @@ static int swift_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr 
 
 	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err);
 	if (unlikely(!skb)) {
-		log_error("skb_recv_datagram\n");
+		log_error("skb_recv_datagram failed with %d\n", err);
 		goto out;
 	}
 
