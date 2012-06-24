@@ -227,7 +227,7 @@ evutil_socket_t Channel::Bind (Address address, sckrwecb_t callbacks) {
     dbnd_ensure ( setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
                              (setsockoptptr_t)&rcvbuf, sizeof(int)) == 0 );
     //setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (setsockoptptr_t)&enable, sizeof(int));
-    dbnd_ensure ( ::bind(fd, (sockaddr*)&addr, len) == 0 );
+    dbnd_ensure ( ::bind(fd, (sockaddr*)addr, len) == 0 );
 
     callbacks.sock = fd;
     sock_open[sock_count++] = callbacks;
@@ -257,8 +257,17 @@ int Channel::SendTo (evutil_socket_t sock, const Address& addr, struct evbuffer 
 
     int length = evbuffer_get_length(evb);
 	int addr_len = sizeof(struct sockaddr_mptp) + addr.addr->count * sizeof(struct mptp_dest);
-    int r = sendto(sock,(const char *)evbuffer_pullup(evb, length),length,0,
-                   (struct sockaddr*)&(addr.addr),addr_len);
+	struct iovec iov[1];
+	struct msghdr msg;
+	memset(&msg, 0, sizeof(msg));
+	memset(&iov, 0, sizeof(iov));
+	iov[0].iov_base = evbuffer_pullup(evb, length);
+	iov[0].iov_len = length;
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 1;
+	msg.msg_name = addr.addr;
+	msg.msg_namelen = addr_len;
+	int r = sendmsg(sock, &msg, 0);
     if (r<0) {
         print_error("can't send");
         evbuffer_drain(evb, length); // Arno: behaviour is to pretend the packet got lost
@@ -278,8 +287,17 @@ int Channel::RecvFrom (evutil_socket_t sock, Address& addr, struct evbuffer *evb
     	print_error("error on evbuffer_reserve_space");
     	return 0;
     }
-    int length = recvfrom (sock, (char *)vec.iov_base, SWIFT_MAX_RECV_DGRAM_SIZE, 0,
-			   (struct sockaddr*)&(addr.addr), &addrlen);
+	struct iovec iov[1];
+	struct msghdr msg;
+	memset(&msg, 0, sizeof(msg));
+	memset(&iov, 0, sizeof(iov));
+	iov[0].iov_base = vec.iov_base;
+	iov[0].iov_len = SWIFT_MAX_RECV_DGRAM_SIZE;
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 1;
+	msg.msg_name = addr.addr;
+	msg.msg_namelen = addrlen;
+	int length = recvmsg(sock, &msg, 0);
     if (length<0) {
         length = 0;
 

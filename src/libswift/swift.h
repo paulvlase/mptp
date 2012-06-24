@@ -103,6 +103,7 @@ namespace swift {
 	//{    inet_aton(ipv4_str,&(addr.sin_addr));    }
 	void clear () {
 		addr = (struct sockaddr_mptp *)calloc(1, sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest));
+		addr->count = 1;
 	}
 	Address() {
 	    clear();
@@ -124,6 +125,7 @@ namespace swift {
 	    set_port(port);
 	}
 	Address(const struct sockaddr_in& address) {
+		clear();
 		addr->dests[0].addr = address.sin_addr.s_addr;
 		addr->dests[0].port = address.sin_port;
 	}
