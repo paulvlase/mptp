@@ -4,27 +4,26 @@
 #define IPPROTO_MPTP 137
 
 #define MIN_MPTP_PORT 1
-#define MAX_MPTP_PORT 65536
+#define MAX_MPTP_PORT 256
 
 #ifndef __KERNEL__
 #include <inttypes.h>
 #endif
 
 struct mptp_dest {
-	uint32_t addr;
-	uint16_t port;
-	uint16_t bytes;
+    uint32_t addr;
+    uint8_t port;
 };
 
 struct sockaddr_mptp {
-	int count;
-	struct mptp_dest dests[0];
+    int count;
+    struct mptp_dest dests[0];
 };
 
 #ifdef __KERNEL__
 struct mptphdr {
-	uint16_t src;
-	uint16_t dst;
+	uint8_t src;
+	uint8_t dst;
 	__be16 len;
 };
 #endif
