@@ -97,6 +97,8 @@ static int mptp_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 
 	log_debug("Bind received port=%u (network order)\n", mptp_addr->dests[0].port);
 	port = ntohs(mptp_addr->dests[0].port);
+	if (port == 0)
+		port = get_next_free_port();
 
 	if (unlikely(port == 0 || port >= MAX_MPTP_PORT)) {
 		log_error("Invalid value for sockaddr port (%u)\n", port);
