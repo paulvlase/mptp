@@ -362,6 +362,7 @@ static int mptp_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *
 	int err, copied;
 	int i;
 	struct sockaddr_mptp *ret_addr = (struct sockaddr_mptp *) msg->msg_name;
+	ret_addr->count = 0;
 
     log_debug("Trying to receive sock=%p sk=%p flags=%d\n", sock, sk, flags);
 
@@ -388,6 +389,7 @@ static int mptp_recvmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *
 			goto out_free;
 		}
 		log_debug("Received %d bytes\n", copied);
+		msg->msg_iov[i].iov_len = copied;
 
 		sock_recv_ts_and_drops(msg, sk, skb);
 
