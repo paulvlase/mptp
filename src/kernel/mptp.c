@@ -341,8 +341,11 @@ static int mptp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *
         if (likely(!err)) {
             log_debug("Sent %u bytes on wire\n", len);
 			ret += len;
-		} else
+			dest->bytes = len;
+		} else {
             log_error("ip_queue_xmit failed\n");
+			dest->bytes = -1;
+		}
     }
 
 	return ret;
