@@ -253,29 +253,36 @@ Address swift::BoundAddress(evutil_socket_t sock) {
 }
 
 
-int Channel::SendTo (evutil_socket_t sock, const Address& addr, struct evbuffer *evb) {
+int Channel::SendTo (evutil_socket_t sock, const Address& addr, struct evbuffer **evb) {
 
-    int length = evbuffer_get_length(evb);
-	int addr_len = sizeof(struct sockaddr_mptp) + addr.addr->count * sizeof(struct mptp_dest);
-	struct iovec iov[1];
+	int count = addr.addr->count;
+	int addr_len = sizeof(struct sockaddr_mptp) + count * sizeof(struct mptp_dest);
+	struct iovec iov[count];
+	int lengths[count];
 	struct msghdr msg;
 	memset(&msg, 0, sizeof(msg));
 	memset(&iov, 0, sizeof(iov));
-	iov[0].iov_base = evbuffer_pullup(evb, length);
-	iov[0].iov_len = length;
+	for (int i=0; i<count; ++i) {
+		lengths[i] = evbuffer_get_length(evb[i]);
+		iov[i].iov_base = evbuffer_pullup(evb[i], lengths[i]);
+		iov[i].iov_len = lengths[i];
+	}
 	msg.msg_iov = iov;
-	msg.msg_iovlen = 1;
+	msg.msg_iovlen = count;
 	msg.msg_name = addr.addr;
 	msg.msg_namelen = addr_len;
 	int r = sendmsg(sock, &msg, 0);
     if (r<0) {
         print_error("can't send");
-        evbuffer_drain(evb, length); // Arno: behaviour is to pretend the packet got lost
+		for (int i=0; i<count; ++i)
+	        evbuffer_drain(evb[i], lengths[i]); // Arno: behaviour is to pretend the packet got lost
     }
     else
-    	evbuffer_drain(evb,r);
-    global_dgrams_up++;
-    global_raw_bytes_up+=length;
+		for (int i=0; i<count; ++i)
+			evbuffer_drain(evb[i], addr.addr->dests[i].bytes);
+    global_dgrams_up+=count;
+	for (int i=0; i<count; ++i)
+		global_raw_bytes_up+=lengths[i];
     Time();
     return r;
 }

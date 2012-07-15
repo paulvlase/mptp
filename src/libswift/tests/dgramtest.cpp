@@ -55,7 +55,7 @@ TEST(Datagram, BinaryTest) {
 	    sprintf(buf+i*2,"%02x",*(data+i));
 	buf[i*2] = 0;
 	EXPECT_STREQ("74657874ababcdabcdef01000abcdefabcdeff",buf);
-	ASSERT_EQ(datalen,Channel::SendTo(socket, addr, snd));
+	ASSERT_EQ(datalen,Channel::SendTo(socket, addr, &snd));
 	evbuffer_free(snd);
 	event_assign(&evrecv, evbase, socket, EV_READ, ReceiveCallback, NULL);
 	event_add(&evrecv, NULL);
@@ -92,7 +92,7 @@ TEST(Datagram,TwoPortTest) {
 	addr2.sin_addr.s_addr = htonl(INADDR_LOOPBACK);*/
 	struct evbuffer *snd = evbuffer_new();
 	evbuffer_add_32be(snd, 1234);
-	Channel::SendTo(sock1,Address("127.0.0.1:10002"),snd);
+	Channel::SendTo(sock1,Address("127.0.0.1:10002"),&snd);
 	evbuffer_free(snd);
 	event_assign(&evrecv, evbase, sock2, EV_READ, ReceiveCallback, NULL);
 	event_add(&evrecv, NULL);

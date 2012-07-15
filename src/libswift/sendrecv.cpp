@@ -200,7 +200,7 @@ void    Channel::Send () {
     dprintf("%s #%u sent %ib %s:%x\n",
             tintstr(),id_,(int)evbuffer_get_length(evb),peer().str(),
             peer_channel_id_);
-    int r = SendTo(socket_,peer(),evb);
+    int r = SendTo(socket_,peer(),&evb);
     if (r==-1)
         print_error("can't send datagram");
     else
@@ -338,7 +338,7 @@ bin_t        Channel::AddData (struct evbuffer *evb) {
         dprintf("%s #%u fsent %ib %s:%x\n",
                 tintstr(),id_,(int)evbuffer_get_length(evb),peer().str(),
                 peer_channel_id_);
-    	int ret = Channel::SendTo(socket_,peer(),evb); // kind of fragmentation
+    	int ret = Channel::SendTo(socket_,peer(),&evb); // kind of fragmentation
     	if (ret > 0)
     		raw_bytes_up_ += ret;
         evbuffer_add_32be(evb, peer_channel_id_);
