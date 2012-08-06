@@ -18,6 +18,7 @@ using namespace swift;
 using namespace std;
 
 struct event_base *Channel::evbase;
+MessageQueue Channel::messageQueue;
 struct event Channel::evrecv;
 
 #define DEBUGTRAFFIC 	0
@@ -200,16 +201,20 @@ void    Channel::Send () {
     dprintf("%s #%u sent %ib %s:%x\n",
             tintstr(),id_,(int)evbuffer_get_length(evb),peer().str(),
             peer_channel_id_);
-    int r = SendTo(socket_,peer(),&evb);
-    if (r==-1)
-        print_error("can't send datagram");
-    else
-    	raw_bytes_up_ += r;
-    last_send_time_ = NOW;
-    sent_since_recv_++;
-    dgrams_sent_++;
-    evbuffer_free(evb);
-    Reschedule();
+
+	messageQueue.AddBuffer(socket_, evb, peer(), this); 
+}
+
+void Channel::Sent(int bytes, evbuffer *evb, bool tofree)
+{
+	raw_bytes_up_ += bytes;
+	if (tofree) {
+		last_send_time_ = NOW;
+		sent_since_recv_++;
+		dgrams_sent_++;
+		evbuffer_free(evb);
+		Reschedule();
+	}
 }
 
 void    Channel::AddHint (struct evbuffer *evb) {
@@ -338,9 +343,7 @@ bin_t        Channel::AddData (struct evbuffer *evb) {
         dprintf("%s #%u fsent %ib %s:%x\n",
                 tintstr(),id_,(int)evbuffer_get_length(evb),peer().str(),
                 peer_channel_id_);
-    	int ret = Channel::SendTo(socket_,peer(),&evb); // kind of fragmentation
-    	if (ret > 0)
-    		raw_bytes_up_ += ret;
+		messageQueue.AddBuffer(socket_, evb, peer(), this, false);
         evbuffer_add_32be(evb, peer_channel_id_);
     }
 

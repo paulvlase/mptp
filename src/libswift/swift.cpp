@@ -27,6 +27,7 @@ int OpenSwiftDirectory(const TCHAR* dirname, Address tracker, bool force_check_d
 void ReportCallback(int fd, short event, void *arg);
 void EndCallback(int fd, short event, void *arg);
 void RescanDirCallback(int fd, short event, void *arg);
+void TimerCallback(int fd, short event, void *arg);
 
 
 // Gateway stuff
@@ -39,7 +40,7 @@ void CmdGwUpdateDLStatesCallback();
 
 
 // Global variables
-struct event evreport, evrescan, evend;
+struct event evreport, evrescan, evend, evtimer;
 int single_fd = -1;
 bool file_enable_checkpoint = false;
 bool file_checkpointed = false;
@@ -328,6 +329,9 @@ int main (int argc, char** argv)
     	evtimer_add(&evend, tint2tv(wait_time));
     }
 
+	evtimer_assign(&evtimer, Channel::evbase, TimerCallback, NULL);
+	evtimer_add(&evtimer, tint2tv(TIMER_USEC));
+
     // Enter mainloop, if daemonizing
     if (wait_time == TINT_NEVER || (long)wait_time > 0) {
 		// Arno: always, for statsgw, rate control, etc.
@@ -565,6 +569,11 @@ void ReportCallback(int fd, short event, void *arg) {
     //     nat_test_update();
 
 	evtimer_add(&evreport, tint2tv(TINT_SEC));
+}
+
+void TimerCallback(int fd, short event, void *arg) {
+	Channel::messageQueue.Flush();
+	evtimer_add(&evtimer, tint2tv(TIMER_USEC));
 }
 
 void EndCallback(int fd, short event, void *arg) {
