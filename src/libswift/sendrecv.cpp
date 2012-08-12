@@ -181,7 +181,7 @@ void    Channel::Send () {
 			}
 			AddPex(evb);
 			TimeoutDataOut();
-			data = AddData(evb);
+			data = AddData(&evb);
     	} else {
     		// Arno: send explicit close
     		AddHandshake(evb);
@@ -296,7 +296,7 @@ void    Channel::AddHint (struct evbuffer *evb) {
 }
 
 
-bin_t        Channel::AddData (struct evbuffer *evb) {
+bin_t        Channel::AddData (struct evbuffer **evb) {
 	// RATELIMIT
 	if (transfer().GetCurrentSpeed(DDIR_UPLOAD) > transfer().GetMaxSpeed(DDIR_UPLOAD)) {
 		transfer().OnSendNoData();
@@ -325,11 +325,11 @@ bin_t        Channel::AddData (struct evbuffer *evb) {
         return bin_t::NONE; // once in a while, empty data is sent just to check rtt FIXED
 
     if (ack_in_.is_empty() && file().size())
-        AddPeakHashes(evb);
+        AddPeakHashes(*evb);
 
     //NETWVSHASH
     if (file().get_check_netwvshash())
-    	AddUncleHashes(evb,tosend);
+    	AddUncleHashes(*evb,tosend);
 
     if (!ack_in_.is_empty()) // TODO: cwnd_>1
         data_out_cap_ = tosend;
@@ -339,12 +339,13 @@ bin_t        Channel::AddData (struct evbuffer *evb) {
     // frame with DATA. Send 2 datagrams then, one with peaks so they have
     // a better chance of arriving. Optimistic violation of atomic datagram
     // principle.
-    if (file().chunk_size() == SWIFT_DEFAULT_CHUNK_SIZE && evbuffer_get_length(evb) > SWIFT_MAX_NONDATA_DGRAM_SIZE) {
+    if (file().chunk_size() == SWIFT_DEFAULT_CHUNK_SIZE && evbuffer_get_length(*evb) > SWIFT_MAX_NONDATA_DGRAM_SIZE) {
         dprintf("%s #%u fsent %ib %s:%x\n",
-                tintstr(),id_,(int)evbuffer_get_length(evb),peer().str(),
+                tintstr(),id_,(int)evbuffer_get_length(*evb),peer().str(),
                 peer_channel_id_);
-		messageQueue.AddBuffer(socket_, evb, peer(), this, false);
-        evbuffer_add_32be(evb, peer_channel_id_);
+		messageQueue.AddBuffer(socket_, *evb, peer(), this, false);
+		*evb = evbuffer_new();
+        evbuffer_add_32be(*evb, peer_channel_id_);
     }
 
     if (file().chunk_size() != SWIFT_DEFAULT_CHUNK_SIZE && isretransmit) {
@@ -361,15 +362,15 @@ bin_t        Channel::AddData (struct evbuffer *evb) {
     	 */
  	     char binstr[32];
          fprintf(stderr,"AddData: retransmit of randomized chunk %s\n",tosend.str(binstr) );
-         evbuffer_add_8(evb, SWIFT_RANDOMIZE);
-         evbuffer_add_32be(evb, (int)rand() );
+         evbuffer_add_8(*evb, SWIFT_RANDOMIZE);
+         evbuffer_add_32be(*evb, (int)rand() );
     }
 
-    evbuffer_add_8(evb, SWIFT_DATA);
-    evbuffer_add_32be(evb, bin_toUInt32(tosend));
+    evbuffer_add_8(*evb, SWIFT_DATA);
+    evbuffer_add_32be(*evb, bin_toUInt32(tosend));
 
     struct evbuffer_iovec vec;
-    if (evbuffer_reserve_space(evb, file().chunk_size(), &vec, 1) < 0) {
+    if (evbuffer_reserve_space(*evb, file().chunk_size(), &vec, 1) < 0) {
 	print_error("error on evbuffer_reserve_space");
 	return bin_t::NONE;
     }
@@ -379,12 +380,12 @@ bin_t        Channel::AddData (struct evbuffer *evb) {
     if (r<0) {
         print_error("error on reading");
         vec.iov_len = 0;
-        evbuffer_commit_space(evb, &vec, 1);
+        evbuffer_commit_space(*evb, &vec, 1);
         return bin_t::NONE;
     }
     // assert(dgram.space()>=r+4+1);
     vec.iov_len = r;
-    if (evbuffer_commit_space(evb, &vec, 1) < 0) {
+    if (evbuffer_commit_space(*evb, &vec, 1) < 0) {
         print_error("error on evbuffer_commit_space");
         return bin_t::NONE;
     }
@@ -486,7 +487,7 @@ void    Channel::Recv (struct evbuffer *evb) {
         uint8_t type = evbuffer_remove_8(evb);
 
         if (DEBUGTRAFFIC)
-        	fprintf(stderr," %d", type);
+        	fprintf(stderr," %d\n", type);
 
         switch (type) {
             case SWIFT_HANDSHAKE: OnHandshake(evb); break;

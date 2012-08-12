@@ -525,7 +525,7 @@ namespace swift {
         void        OnHandshake (struct evbuffer *evb);
         void        OnRandomize (struct evbuffer *evb); //FRAGRAND
         void        AddHandshake (struct evbuffer *evb);
-        bin_t       AddData (struct evbuffer *evb);
+        bin_t       AddData (struct evbuffer **evb);
         void        AddAck (struct evbuffer *evb);
         void        AddHave (struct evbuffer *evb);
         void        AddHint (struct evbuffer *evb);
@@ -791,7 +791,7 @@ namespace swift {
     // Arno: Save transfer's binmap for zero-hashcheck restart
     void Checkpoint(int fdes);
 
-#define MAX_QUEUE_LENGTH 10
+#define MAX_QUEUE_LENGTH 1
 #define TIMER_USEC 100000
 
 	class MessageQueue
@@ -845,13 +845,10 @@ namespace swift {
 			}
 
 			int r = Channel::SendTo(sock, addr, evbs);
-			printf("Sent %d buffers\n", list.size());
 			if (r > 0) {
 				i = 0;
-				for (EntryList::iterator it = list.begin(); it != list.end(); ++it, ++i) {
+				for (EntryList::iterator it = list.begin(); it != list.end(); ++it, ++i)
 					(*it).channel->Sent(evbuffer_get_length((*it).evb), (*it).evb, (*it).tofree);
-					printf("Sent %d bytes\n", addr.addr->dests[i].bytes);
-				}
 			}
 			list.clear();
 		}
