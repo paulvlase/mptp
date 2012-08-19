@@ -83,7 +83,7 @@ if sys.platform == "win32":
     APPSOURCE=['swift.cpp','httpgw.cpp','statsgw.cpp','cmdgw.cpp','getopt.c','getopt_long.c']
     
 else:
-    libevent2path = '/arno/pkgs/libevent-2.0.15-arno-http'
+    libevent2path = '/usr/local/'
 
     # Enable the user defining external includes
     if 'CPPPATH' in os.environ:
