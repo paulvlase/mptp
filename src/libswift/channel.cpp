@@ -27,7 +27,9 @@ tint Channel::start = now_t::now;
 tint Channel::epoch = now_t::now/360000000LL*360000000LL; // make logs mergeable
 uint64_t Channel::global_dgrams_up=0, Channel::global_dgrams_down=0,
          Channel::global_raw_bytes_up=0, Channel::global_raw_bytes_down=0,
-         Channel::global_bytes_up=0, Channel::global_bytes_down=0;
+         Channel::global_bytes_up=0, Channel::global_bytes_down=0,
+		 Channel::global_buffers_up=0, Channel::global_syscalls_up=0,
+		 Channel::global_buffers_down=0, Channel::global_syscalls_down=0;
 sckrwecb_t Channel::sock_open[] = {};
 int Channel::sock_count = 0;
 swift::tint Channel::last_tick = 0;
@@ -281,6 +283,8 @@ int Channel::SendTo (evutil_socket_t sock, const Address& addr, struct evbuffer 
 		for (int i=0; i<count; ++i)
 			evbuffer_drain(evb[i], addr.addr->dests[i].bytes);
     global_dgrams_up+=count;
+	global_buffers_up+=count;
+	global_syscalls_up++;
 	for (int i=0; i<count; ++i)
 		global_raw_bytes_up+=lengths[i];
     Time();
@@ -338,6 +342,8 @@ int Channel::RecvFrom (evutil_socket_t sock, Address& addr, struct evbuffer **ev
 		}
 	}
     global_dgrams_down+=addr.addr->count;
+	global_buffers_down+=addr.addr->count;
+	global_syscalls_down++;
     global_raw_bytes_down+=length;
     Time();
     return length;

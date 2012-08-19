@@ -499,11 +499,13 @@ void ReportCallback(int fd, short event, void *arg) {
 		if (report_progress) {
 			fprintf(stderr,
 				"%s %lli of %lli (seq %lli) %lli dgram %lli bytes up, "	\
-				"%lli dgram %lli bytes down\n",
+				"%lli dgram %lli bytes down mptp[send:%lli,%lli;recv:%lli,%lli]\n",
 				IsComplete(single_fd ) ? "DONE" : "done",
 				Complete(single_fd), Size(single_fd), SeqComplete(single_fd),
 				Channel::global_dgrams_up, Channel::global_raw_bytes_up,
-				Channel::global_dgrams_down, Channel::global_raw_bytes_down );
+				Channel::global_dgrams_down, Channel::global_raw_bytes_down,
+				Channel::global_buffers_up, Channel::global_syscalls_up,
+				Channel::global_buffers_down, Channel::global_syscalls_down);
 		}
 
         FileTransfer *ft = FileTransfer::file(single_fd);

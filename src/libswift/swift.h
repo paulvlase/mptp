@@ -489,7 +489,8 @@ namespace swift {
 		static MessageQueue messageQueue;
 
 	    static tint epoch, start;
-	    static uint64_t global_dgrams_up, global_dgrams_down, global_raw_bytes_up, global_raw_bytes_down, global_bytes_up, global_bytes_down;
+	    static uint64_t global_dgrams_up, global_dgrams_down, global_raw_bytes_up, global_raw_bytes_down, global_bytes_up, global_bytes_down,
+						global_buffers_up, global_syscalls_up, global_buffers_down, global_syscalls_down;
         static void CloseChannelByAddress(const Address &addr);
 
         // SOCKMGMT
@@ -792,7 +793,7 @@ namespace swift {
     void Checkpoint(int fdes);
 
 #define MAX_QUEUE_LENGTH 1
-#define TIMER_USEC 100000
+#define TIMER_USEC 10000
 
 	class MessageQueue
 	{
