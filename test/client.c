@@ -37,7 +37,7 @@ int main(int argc, const char *argv[])
     memset(saddr, 0, size);
 
     saddr->count = 1;
-    saddr->dests[0].addr = ADDR;
+    inet_aton(ADDR, &(saddr->dests[0].addr));
     saddr->dests[0].port = htons(gen_port());
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
@@ -63,9 +63,9 @@ int main(int argc, const char *argv[])
     iov[1].iov_len = sizeof(buf2);
 
     to->count = 2;
-    to->dests[0].addr = DADDR;
+    inet_aton(DADDR, &(to->dests[0].addr));
     to->dests[0].port = htons(100);
-    to->dests[1].addr = DADDR;
+    inet_aton(DADDR, &(to->dests[1].addr));
     to->dests[1].port = htons(101);
 
     msg.msg_iov = iov;

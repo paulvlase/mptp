@@ -31,7 +31,7 @@ int main(int argc, const char *argv[])
     memset(saddr, 0, size);
 
     saddr->count = 1;
-    saddr->dests[0].addr = ADDR;
+    inet_aton(ADDR, &(saddr->dests[0].addr));
     saddr->dests[0].port = htons(atoi(argv[1]));
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
