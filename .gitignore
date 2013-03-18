@@ -12,3 +12,9 @@ TAGS
 *.tgz
 *.tbz2
 *.Z
+*.ko
+*.o.cmd
+*.ko.cmd
+*.mod.c
+modules.order
+.tmp_versions/
