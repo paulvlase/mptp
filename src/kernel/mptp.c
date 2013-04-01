@@ -129,8 +129,9 @@ static int mptp_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 	return err;
 }
 
-static int mptp_connect(struct socket *sock, struct sockaddr *addr,
-			int addr_len, int flags)
+static int
+mptp_connect(struct socket *sock, struct sockaddr *addr,
+	     int addr_len, int flags)
 {
 	int err;
 	struct sock *sk;
@@ -205,8 +206,9 @@ static int mptp_connect(struct socket *sock, struct sockaddr *addr,
 	return err;
 }
 
-static int mptp_sendmsg(struct kiocb *iocb, struct socket *sock,
-			struct msghdr *msg, size_t len)
+static int
+mptp_sendmsg(struct kiocb *iocb, struct socket *sock,
+	     struct msghdr *msg, size_t len)
 {
 	int err;
 	uint16_t dport;
@@ -288,16 +290,15 @@ static int mptp_sendmsg(struct kiocb *iocb, struct socket *sock,
 
 	if (msg->msg_iovlen < dests)
 		dests = msg->msg_iovlen;
-	
+
 	for (i = 0; i < dests; i++) {
 		struct mptp_dest *dest = &mptp_addr->dests[i];
 		struct iovec *iov = &msg->msg_iov[i];
 		char *payload;
-		
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39)
 		struct flowi fl;
 #endif
-		
 
 		dport = ntohs(dest->port);
 		if (unlikely(dport == 0 || dport >= MAX_MPTP_PORT)) {
@@ -403,15 +404,16 @@ static int mptp_sendmsg(struct kiocb *iocb, struct socket *sock,
 
 	return ret;
 
-out_free:
+ out_free:
 	kfree(skb);
 
-out:
+ out:
 	return err;
 }
 
-static int mptp_recvmsg(struct kiocb *iocb, struct socket *sock,
-			struct msghdr *msg, size_t len, int flags)
+static int
+mptp_recvmsg(struct kiocb *iocb, struct socket *sock,
+	     struct msghdr *msg, size_t len, int flags)
 {
 	struct sk_buff *skb;
 	struct sockaddr_mptp *mptp_addr;
