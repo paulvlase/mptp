@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define ADDR 0x8182A8C0
-#define DADDR 0x8182A8C0
+#define ADDR "192.168.56.101"
+#define DADDR "192.168.56.101"
 
 int gen_port()
 {

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
-#define ADDR 0x81BEA8C0
+#define ADDR "192.168.56.101"
 
 int main(int argc, const char *argv[])
 {
@@ -30,8 +30,8 @@ int main(int argc, const char *argv[])
     memset(saddr, 0, size);
 
     saddr->count = 1;
-    saddr->dests[0].addr = ADDR;
-    saddr->dests[0].port = atoi(argv[1]);
+    inet_aton(ADDR, &(saddr->dests[0].addr));
+    saddr->dests[0].port = htons(atoi(argv[1]));
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
         perror("Failed to bind socket");

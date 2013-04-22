@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
-#define ADDR 0x8182A8C0
+#define ADDR "192.168.56.101"
 #define NUM_BUF 10
 
 int main(int argc, const char *argv[])

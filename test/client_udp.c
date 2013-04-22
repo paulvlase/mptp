@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define ADDR "192.168.56.101"
+#define DADDR "192.168.56.101"
+
 int main(int argc, const char *argv[])
 {
     int sock;
@@ -20,7 +23,7 @@ int main(int argc, const char *argv[])
 	struct sockaddr_in saddr;
     memset(&saddr, 0, sizeof(saddr));
 
-	inet_pton(AF_INET, "192.168.130.128", &saddr.sin_addr.s_addr);
+	inet_pton(AF_INET, ADDR, &saddr.sin_addr.s_addr);
 	saddr.sin_port = 0;
 	saddr.sin_family = AF_INET;
 
@@ -43,7 +46,7 @@ int main(int argc, const char *argv[])
     iov[0].iov_base = buf;
     iov[0].iov_len = sizeof(buf);
 
-	inet_pton(AF_INET, "192.168.130.129", &to.sin_addr.s_addr);
+	inet_pton(AF_INET, DADDR, &to.sin_addr.s_addr);
 	to.sin_port = htons(100);
 	to.sin_family = AF_INET;
 

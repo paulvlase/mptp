@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define ADDR 0x8082A8C0
-#define DADDR 0x8182A8C0
+#define ADDR "192.168..56.101"
+#define DADDR "192.168.56.101"
 
 int gen_port()
 {
@@ -37,8 +37,8 @@ int main(int argc, const char *argv[])
     memset(saddr, 0, size);
 
     saddr->count = 1;
-    saddr->dests[0].addr = ADDR;
-    saddr->dests[0].port = gen_port();
+    inet_aton(ADDR, &(saddr->dests[0].addr));
+    saddr->dests[0].port = htons(gen_port());
 
     if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
         perror("Failed to bind socket");
@@ -67,8 +67,8 @@ int main(int argc, const char *argv[])
 
     to->count = N;
 	for (i = 0; i < N; i++) {
-		to->dests[i].addr = DADDR;
-		to->dests[i].port = 100;
+    		inet_aton(DADDR, &(to->dests[i].addr));
+		to->dests[i].port = htons(100);
 	}
 
     msg.msg_iov = iov;

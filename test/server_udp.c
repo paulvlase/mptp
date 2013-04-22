@@ -5,6 +5,8 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 
+#define ADDR "192.168.56.101"
+
 int main(int argc, const char *argv[])
 {
     int sock;
@@ -24,7 +26,7 @@ int main(int argc, const char *argv[])
     struct sockaddr_in saddr;
     memset(&saddr, 0, sizeof(saddr));
 
-	inet_pton(AF_INET, "192.168.130.129", &saddr.sin_addr.s_addr);
+	inet_pton(AF_INET, ADDR, &saddr.sin_addr.s_addr);
 	saddr.sin_port = htons(atoi(argv[1]));
 	saddr.sin_family = AF_INET;
 
