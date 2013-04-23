@@ -24,71 +24,71 @@ int gen_port()
 
 int main(int argc, const char *argv[])
 {
-    int sock;
+	int sock;
 
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_MPTP);
-    if (sock < 0) {
-        perror("Failed to create socket");
-        return -1;
-    }
+	sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_MPTP);
+	if (sock < 0) {
+		perror("Failed to create socket");
+		return -1;
+	}
 
-    int size = sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest);
-    struct sockaddr_mptp *saddr = malloc(size);
-    memset(saddr, 0, size);
+	int size = sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest);
+	struct sockaddr_mptp *saddr = malloc(size);
+	memset(saddr, 0, size);
 
-    saddr->count = 1;
-    inet_aton(ADDR, &(saddr->dests[0].addr));
-    saddr->dests[0].port = htons(gen_port());
+	saddr->count = 1;
+	inet_aton(ADDR, &(saddr->dests[0].addr));
+	saddr->dests[0].port = htons(gen_port());
 
-    if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
-        perror("Failed to bind socket");
-        close(sock);
-        return -1;
-    }
+	if (bind(sock, (struct sockaddr *)saddr, size) < 0) {
+		perror("Failed to bind socket");
+		close(sock);
+		return -1;
+	}
 
-    char buf[] = "Buffer1";
-    char buf2[] = "Buffer2";
-    struct iovec iov[2];
-    struct msghdr msg;
-    int size2 = sizeof(struct sockaddr_mptp) + 2 * sizeof(struct mptp_dest);
-    struct sockaddr_mptp *to = malloc(size2);
+	char buf[] = "Buffer1";
+	char buf2[] = "Buffer2";
+	struct iovec iov[2];
+	struct msghdr msg;
+	int size2 = sizeof(struct sockaddr_mptp) + 2 * sizeof(struct mptp_dest);
+	struct sockaddr_mptp *to = malloc(size2);
 
-    memset(&msg, 0, sizeof(msg));
-    memset(&iov, 0, sizeof(iov));
-    memset(to, 0, size2);
+	memset(&msg, 0, sizeof(msg));
+	memset(&iov, 0, sizeof(iov));
+	memset(to, 0, size2);
 
-    iov[0].iov_base = buf;
-    iov[0].iov_len = sizeof(buf);
-    iov[1].iov_base = buf2;
-    iov[1].iov_len = sizeof(buf2);
+	iov[0].iov_base = buf;
+	iov[0].iov_len = sizeof(buf);
+	iov[1].iov_base = buf2;
+	iov[1].iov_len = sizeof(buf2);
 
-    to->count = 2;
-    inet_aton(DADDR, &(to->dests[0].addr));
-    to->dests[0].port = htons(100);
-    inet_aton(DADDR, &(to->dests[1].addr));
-    to->dests[1].port = htons(101);
+	to->count = 2;
+	inet_aton(DADDR, &(to->dests[0].addr));
+	to->dests[0].port = htons(100);
+	inet_aton(DADDR, &(to->dests[1].addr));
+	to->dests[1].port = htons(101);
 
-    msg.msg_iov = iov;
-    msg.msg_iovlen = 2;
-    msg.msg_name = to;
-    msg.msg_namelen = size2;
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 2;
+	msg.msg_name = to;
+	msg.msg_namelen = size2;
 
-    int ret;
+	int ret;
 
-    ret = sendmsg(sock, &msg, sizeof(msg));
-    if (ret < 0) {
-        perror("Failed to send on socket");
-        return -1;
-    }
+	ret = sendmsg(sock, &msg, sizeof(msg));
+	if (ret < 0) {
+		perror("Failed to send on socket");
+		return -1;
+	}
 
-    printf("Sent %d bytes on socket\n", msg.msg_namelen);
+	printf("Sent %d bytes on socket\n", msg.msg_namelen);
 
-    if (close(sock) < 0) {
-        perror("Failed to close socket");
-        return -1;
-    }
+	if (close(sock) < 0) {
+		perror("Failed to close socket");
+		return -1;
+	}
 
-    free(saddr);
-    free(to);
-    return 0;
+	free(saddr);
+	free(to);
+	return 0;
 }

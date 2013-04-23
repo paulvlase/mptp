@@ -12,56 +12,55 @@
 
 int main(int argc, const char *argv[])
 {
-    int sock;
+	int sock;
 	int i;
 
-    if (argc != 2) {
-        fprintf(stderr, "USAGE: %s listening_port\n", argv[0]);
-        return -1;
-    }
+	if (argc != 2) {
+		fprintf(stderr, "USAGE: %s listening_port\n", argv[0]);
+		return -1;
+	}
 
-    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_MPTP);
-    if (sock < 0) {
-        perror("Failed to create socket");
-        return -1;
-    }
+	sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_MPTP);
+	if (sock < 0) {
+		perror("Failed to create socket");
+		return -1;
+	}
 
-    int size = sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest);
-    struct sockaddr_mptp *saddr = malloc(size);
-    memset(saddr, 0, size);
+	int size = sizeof(struct sockaddr_mptp) + sizeof(struct mptp_dest);
+	struct sockaddr_mptp *saddr = malloc(size);
+	memset(saddr, 0, size);
 
-    saddr->count = 1;
-    inet_aton(ADDR, &(saddr->dests[0].addr));
-    saddr->dests[0].port = htons(atoi(argv[1]));
+	saddr->count = 1;
+	inet_aton(ADDR, &(saddr->dests[0].addr));
+	saddr->dests[0].port = htons(atoi(argv[1]));
 
-    if (bind(sock, (struct sockaddr *) saddr, size) < 0) {
-        perror("Failed to bind socket");
-        close(sock);
-        return -1;
-    }
-
+	if (bind(sock, (struct sockaddr *)saddr, size) < 0) {
+		perror("Failed to bind socket");
+		close(sock);
+		return -1;
+	}
 #define N 16
-    char buf[N][4096];
-    struct iovec iov[N];
-    struct msghdr msg;
+	char buf[N][4096];
+	struct iovec iov[N];
+	struct msghdr msg;
 	size += (N - 1) * sizeof(struct mptp_dest);
-    struct sockaddr_mptp *from = malloc(size);
+	struct sockaddr_mptp *from = malloc(size);
 
-    memset(&msg, 0, sizeof(msg));
-    memset(&iov, 0, sizeof(iov));
-    memset(from, 0, size);
+	memset(&msg, 0, sizeof(msg));
+	memset(&iov, 0, sizeof(iov));
+	memset(from, 0, size);
 
 	for (i = 0; i < N; i++) {
 		iov[i].iov_base = buf[i];
 		iov[i].iov_len = sizeof(buf[i]);
 	}
 
-    msg.msg_iov = iov;
-    msg.msg_iovlen = N;
-    msg.msg_name = from;
-    msg.msg_namelen = size;
+	msg.msg_iov = iov;
+	msg.msg_iovlen = N;
+	msg.msg_name = from;
+	msg.msg_namelen = size;
 
-    int ret, fromlen;
+	int ret, fromlen;
 
 #define COUNT (10000/(N))
 
@@ -71,19 +70,19 @@ int main(int argc, const char *argv[])
 			perror("Failed to recv on socket");
 			return -1;
 		}
-		if (i % (COUNT/50) == 0)
+		if (i % (COUNT / 50) == 0)
 			printf("%d\n", i);
 	}
 
-    printf("Received %d bytes on socket\n", ret);
+	printf("Received %d bytes on socket\n", ret);
 
-    if (close(sock) < 0) {
-        perror("Failed to close socket");
-        return -1;
-    }
+	if (close(sock) < 0) {
+		perror("Failed to close socket");
+		return -1;
+	}
 
-    free(saddr);
-    free(from);
+	free(saddr);
+	free(from);
 
-    return 0;
+	return 0;
 }
