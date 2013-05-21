@@ -40,7 +40,7 @@ int main(int argc, const char *argv[])
 		return -1;
 	}
 
-	int fd = open(argv[2], O_RDWR | O_CREAT | O_TRUNC);
+	int fd = open(argv[2], O_RDWR | O_CREAT | O_TRUNC, 0666);
 	if (fd < 0) {
 		perror("Failed to open file");
 		close(sock);
@@ -81,8 +81,8 @@ int main(int argc, const char *argv[])
 			return -1;
 		}
 
-		printf("Received %d bytes on socket\n", ret);
-		printf("buf=%s\n", buf);
+		//printf("Received %d bytes on socket\n", ret);
+		//printf("buf=%s\n", buf);
 
 		if (ret < 8192)
 			break;

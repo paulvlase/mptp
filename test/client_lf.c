@@ -15,6 +15,12 @@ int main(int argc, const char *argv[])
 {
 	int sock;
 
+	if (argc != 2) {
+		fprintf(stderr, "USAGE: %s input_file_name\n",
+			argv[0]);
+		return -1;
+	}
+
 	sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_MPTP);
 	if (sock < 0) {
 		perror("Failed to create socket");
@@ -35,7 +41,7 @@ int main(int argc, const char *argv[])
 		return -1;
 	}
 
-	int fd = open("large_file", O_RDONLY);
+	int fd = open(argv[1], O_RDONLY);
 	if (fd < 0) {
 		perror("Failed to open file");
 		close(sock);
@@ -85,7 +91,7 @@ int main(int argc, const char *argv[])
 			return -1;
 		}
 
-		printf("Sent %d bytes on socket\n", msg.msg_namelen);
+		//printf("Sent %d bytes on socket\n", msg.msg_namelen);
 	}
 
 	if (close(sock) < 0) {
