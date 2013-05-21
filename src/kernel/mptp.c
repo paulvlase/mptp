@@ -361,7 +361,7 @@ mptp_sendmsg(struct kiocb *iocb, struct socket *sock,
 			rt = (struct rtable *)__sk_dst_check(sk, 0);
 
 		if (rt == NULL) {
-			printk("[%s] rt == NULL\n", __FUNCTION__);
+			log_debug("rt == NULL\n");
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
 			struct flowi fl = {.fl4_dst = daddr,
 				.proto = sk->sk_protocol,
@@ -375,7 +375,7 @@ mptp_sendmsg(struct kiocb *iocb, struct socket *sock,
 			}
 #else
 			rt = ip_route_output_flow(sock_net(sk), &fl.u.ip4, sk);
-			printk("[%s] rt = %p\n", __FUNCTION__, rt);
+			log_debug("rt = %p\n", rt);
 			if (IS_ERR(rt)) {
 				log_error("Route lookup failed\n");
 				goto out_free;
@@ -387,7 +387,7 @@ mptp_sendmsg(struct kiocb *iocb, struct socket *sock,
 			sk_dst_set(sk, dst_clone(&rt->dst));
 #endif
 		}
-		printk("[%s] rt != NULL\n", __FUNCTION__);
+		log_debug("rt != NULL\n");
 
 		skb->local_df = 1;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
